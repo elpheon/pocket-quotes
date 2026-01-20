@@ -75,7 +75,7 @@ export default function Feed() {
     }
   }, []);
 
-  // Handle scroll to detect current quote
+  // Handle scroll to detect current quote and cycle back to start
   const handleScroll = useCallback(() => {
     if (!containerRef.current || isScrolling.current) return;
     
@@ -91,7 +91,19 @@ export default function Feed() {
     if (newIndex !== currentIndex && newIndex >= 0) {
       setCurrentIndex(newIndex);
     }
-  }, [currentIndex]);
+
+    // Check if we've reached near the end and cycle back
+    const maxScroll = container.scrollHeight - container.clientHeight;
+    if (scrollTop >= maxScroll - 10 && quotes.length > 0) {
+      // Scroll back to the beginning after a brief moment
+      setTimeout(() => {
+        if (containerRef.current) {
+          containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+          setCurrentIndex(0);
+        }
+      }, 500);
+    }
+  }, [currentIndex, quotes.length]);
 
   // Build feed items (quotes + ads)
   const feedItems = useCallback(() => {
