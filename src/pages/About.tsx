@@ -1,13 +1,24 @@
-import { ExternalLink, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { getHideNSFW, setHideNSFW } from '@/lib/settings';
 
 export default function About() {
+  const [hideNSFW, setHideNSFWState] = useState(false);
+
+  useEffect(() => {
+    setHideNSFWState(getHideNSFW());
+  }, []);
+
+  const handleToggleNSFW = (checked: boolean) => {
+    setHideNSFWState(checked);
+    setHideNSFW(checked);
+  };
+
   const handleRateApp = () => {
     // Replace with your actual app store URLs
-    // For iOS: itms-apps://apps.apple.com/app/idYOUR_APP_ID
-    // For Android: market://details?id=YOUR_PACKAGE_NAME
-    
-    // For now, we'll just show an alert in development
     alert('Rate app functionality will work in the native app build');
   };
 
@@ -31,6 +42,20 @@ export default function About() {
             wildly out of pocket quotes. Save your favorites and share them 
             with friends.
           </p>
+        </div>
+
+        {/* Settings */}
+        <div className="mb-8 w-full max-w-sm rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="hide-nsfw" className="text-sm text-foreground">
+              Hide NSFW quotes
+            </Label>
+            <Switch
+              id="hide-nsfw"
+              checked={hideNSFW}
+              onCheckedChange={handleToggleNSFW}
+            />
+          </div>
         </div>
 
         {/* Rate button */}
