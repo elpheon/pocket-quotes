@@ -96,6 +96,7 @@ export default {
   		},
 		fontFamily: {
 			sans: [
+				'Oswald',
 				'Calibri',
 				'Segoe UI',
 				'Helvetica Neue',
@@ -103,6 +104,7 @@ export default {
 				'sans-serif'
 			],
 			serif: [
+				'Oswald',
 				'Cambria',
 				'Georgia',
 				'Times New Roman',
