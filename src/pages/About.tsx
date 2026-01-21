@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Star, Shield, ExternalLink } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { getHideNSFW, setHideNSFW } from '@/lib/settings';
+
+// ============================================================
+// PRODUCTION: Replace these with your actual App Store URLs
+// ============================================================
+const STORE_URLS = {
+  ios: 'https://apps.apple.com/app/id000000000', // Replace with your App Store ID
+  android: 'https://play.google.com/store/apps/details?id=com.yourcompany.outofpocket', // Replace with your package name
+};
 
 export default function About() {
   const [hideNSFW, setHideNSFWState] = useState(false);
@@ -18,8 +28,16 @@ export default function About() {
   };
 
   const handleRateApp = () => {
-    // Replace with your actual app store URLs
-    alert('Rate app functionality will work in the native app build');
+    const platform = Capacitor.getPlatform();
+    
+    if (platform === 'ios') {
+      window.open(STORE_URLS.ios, '_blank');
+    } else if (platform === 'android') {
+      window.open(STORE_URLS.android, '_blank');
+    } else {
+      // Web fallback - show both options
+      alert('Rate us on the App Store or Google Play Store!');
+    }
   };
 
   return (
@@ -45,7 +63,7 @@ export default function About() {
         </div>
 
         {/* Settings */}
-        <div className="mb-8 w-full max-w-sm rounded-lg border border-border bg-card p-4">
+        <div className="mb-6 w-full max-w-sm rounded-lg border border-border bg-card p-4">
           <div className="flex items-center justify-between">
             <Label htmlFor="hide-nsfw" className="text-sm text-foreground">
               Hide NSFW quotes
@@ -58,15 +76,30 @@ export default function About() {
           </div>
         </div>
 
-        {/* Rate button */}
-        <Button
-          onClick={handleRateApp}
-          variant="secondary"
-          className="gap-2"
-        >
-          <Star className="h-5 w-5" />
-          Rate this app
-        </Button>
+        {/* Action buttons */}
+        <div className="flex flex-col gap-3">
+          <Button
+            onClick={handleRateApp}
+            variant="secondary"
+            className="gap-2"
+          >
+            <Star className="h-5 w-5" />
+            Rate this app
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-muted-foreground"
+            asChild
+          >
+            <Link to="/privacy">
+              <Shield className="h-4 w-4" />
+              Privacy Policy
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Footer */}

@@ -3,7 +3,9 @@
  * 
  * This component handles AdMob banner ads using @capacitor-community/admob.
  * 
- * SETUP REQUIRED:
+ * ============================================================
+ * SETUP REQUIRED FOR PRODUCTION:
+ * ============================================================
  * 
  * 1. Create an AdMob account at https://admob.google.com
  * 
@@ -14,30 +16,43 @@
  * 3. Add your AdMob App ID to native manifests:
  * 
  *    Android (android/app/src/main/AndroidManifest.xml):
+ *    Add inside <application> tag:
  *    <meta-data
  *      android:name="com.google.android.gms.ads.APPLICATION_ID"
  *      android:value="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"/>
  * 
  *    iOS (ios/App/App/Info.plist):
+ *    Add inside <dict>:
  *    <key>GADApplicationIdentifier</key>
  *    <string>ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY</string>
  * 
  * 4. Replace the AD_UNIT_IDS below with your production IDs
  * 
+ * 5. Set initializeForTesting to false in the AdMob.initialize() call below
+ * 
+ * ============================================================
  * TEST AD UNIT IDS (use during development):
  * - Android Banner: ca-app-pub-3940256099942544/6300978111
  * - iOS Banner: ca-app-pub-3940256099942544/2934735716
+ * ============================================================
  */
 
 import { useEffect, useState } from 'react';
 import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 
-// Replace these with your production AdMob unit IDs before app store submission
+// ============================================================
+// PRODUCTION: Replace these with your real AdMob Ad Unit IDs
+// ============================================================
 const AD_UNIT_IDS = {
-  android: 'ca-app-pub-3940256099942544/6300978111', // Test ID - replace with production
-  ios: 'ca-app-pub-3940256099942544/2934735716', // Test ID - replace with production
+  android: 'ca-app-pub-3940256099942544/6300978111', // TEST ID - Replace with: ca-app-pub-XXXX/YYYY
+  ios: 'ca-app-pub-3940256099942544/2934735716',     // TEST ID - Replace with: ca-app-pub-XXXX/YYYY
 };
+
+// ============================================================
+// PRODUCTION: Set this to false before submitting to app stores
+// ============================================================
+const INITIALIZE_FOR_TESTING = true;
 
 interface AdBannerProps {
   className?: string;
@@ -63,7 +78,7 @@ export function AdBanner({ className }: AdBannerProps) {
       try {
         // Initialize AdMob (only needed once, but safe to call multiple times)
         await AdMob.initialize({
-          initializeForTesting: true, // Set to false for production
+          initializeForTesting: INITIALIZE_FOR_TESTING,
         });
 
         const adUnitId = platform === 'ios' ? AD_UNIT_IDS.ios : AD_UNIT_IDS.android;
