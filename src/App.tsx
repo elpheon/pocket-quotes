@@ -9,6 +9,7 @@ import { initializeNotifications } from "@/lib/notifications";
 import Feed from "./pages/Feed";
 import Saved from "./pages/Saved";
 import About from "./pages/About";
+import Privacy from "./pages/Privacy";
 import QuoteOfTheDay from "./pages/QuoteOfTheDay";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ function AppContent() {
           <Route path="/daily" element={<QuoteOfTheDay />} />
           <Route path="/saved" element={<Saved />} />
           <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
