@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Quote, loadQuotes, shuffleQuotes } from '@/lib/quotes';
 import { isFavorite, toggleFavorite, cleanupFavorites } from '@/lib/favorites';
+import { getHideNSFW } from '@/lib/settings';
 import { QuoteCard } from '@/components/QuoteCard';
 import { AdBanner, shouldShowAd } from '@/components/AdBanner';
 import { Loader2 } from 'lucide-react';
@@ -14,12 +15,19 @@ export default function Feed() {
   const isScrolling = useRef(false);
   const lastScrollTime = useRef(0);
 
-  // Load quotes on mount
+  // Load quotes on mount and when returning to feed
   useEffect(() => {
     async function init() {
       try {
         const loadedQuotes = await loadQuotes();
-        const shuffled = shuffleQuotes(loadedQuotes);
+        
+        // Filter NSFW if setting is enabled
+        const hideNSFW = getHideNSFW();
+        const filteredQuotes = hideNSFW 
+          ? loadedQuotes.filter(q => !q.tags?.some(tag => tag.toLowerCase() === 'nsfw'))
+          : loadedQuotes;
+        
+        const shuffled = shuffleQuotes(filteredQuotes);
         setQuotes(shuffled);
         
         // Clean up favorites for quotes that no longer exist
