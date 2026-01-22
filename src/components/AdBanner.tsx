@@ -37,7 +37,7 @@
  * ============================================================
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 
@@ -54,6 +54,10 @@ const AD_UNIT_IDS = {
 // ============================================================
 const INITIALIZE_FOR_TESTING = true;
 
+// Singleton to track AdMob initialization state
+let admobInitialized = false;
+let admobInitializing = false;
+
 interface AdBannerProps {
   className?: string;
   isVisible?: boolean; // Controls whether the ad overlay is shown
@@ -63,8 +67,10 @@ export function AdBanner({ className, isVisible = true }: AdBannerProps) {
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const lastVisibleState = useRef<boolean | null>(null);
 
+  // Initialize AdMob once globally
   useEffect(() => {
     const platform = Capacitor.getPlatform();
     const isNativePlatform = platform === 'ios' || platform === 'android';
@@ -74,25 +80,48 @@ export function AdBanner({ className, isVisible = true }: AdBannerProps) {
       return;
     }
 
-    // Initialize AdMob once
     const initializeAdMob = async () => {
+      if (admobInitialized) {
+        setIsReady(true);
+        return;
+      }
+      
+      if (admobInitializing) {
+        // Wait for initialization to complete
+        const checkReady = setInterval(() => {
+          if (admobInitialized) {
+            clearInterval(checkReady);
+            setIsReady(true);
+          }
+        }, 100);
+        return;
+      }
+
+      admobInitializing = true;
       try {
         await AdMob.initialize({
           initializeForTesting: INITIALIZE_FOR_TESTING,
         });
-        setIsInitialized(true);
+        admobInitialized = true;
+        setIsReady(true);
       } catch (error) {
         console.error('AdMob initialization error:', error);
         setAdError(error instanceof Error ? error.message : 'Failed to initialize');
+      } finally {
+        admobInitializing = false;
       }
     };
 
     initializeAdMob();
   }, []);
 
-  // Show/hide banner based on visibility
+  // Manage banner visibility - remove and recreate for each ad slot
   useEffect(() => {
-    if (!isNative || !isInitialized) return;
+    if (!isNative || !isReady) return;
+    
+    // Skip if visibility hasn't changed
+    if (lastVisibleState.current === isVisible) return;
+    lastVisibleState.current = isVisible;
 
     const platform = Capacitor.getPlatform();
     const adUnitId = platform === 'ios' ? AD_UNIT_IDS.ios : AD_UNIT_IDS.android;
@@ -100,6 +129,16 @@ export function AdBanner({ className, isVisible = true }: AdBannerProps) {
     const manageBanner = async () => {
       try {
         if (isVisible) {
+          // Remove any existing banner first to ensure clean state
+          try {
+            await AdMob.removeBanner();
+          } catch {
+            // Ignore error if no banner exists
+          }
+          
+          // Small delay to ensure cleanup is complete
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
           const options: BannerAdOptions = {
             adId: adUnitId,
             adSize: BannerAdSize.ADAPTIVE_BANNER,
@@ -108,8 +147,11 @@ export function AdBanner({ className, isVisible = true }: AdBannerProps) {
           };
           await AdMob.showBanner(options);
           setAdLoaded(true);
+          setAdError(null);
         } else {
-          await AdMob.hideBanner();
+          // Remove banner completely when not visible
+          await AdMob.removeBanner();
+          setAdLoaded(false);
         }
       } catch (error) {
         console.error('AdMob banner error:', error);
@@ -118,12 +160,16 @@ export function AdBanner({ className, isVisible = true }: AdBannerProps) {
     };
 
     manageBanner();
+  }, [isNative, isReady, isVisible]);
 
-    // Cleanup: hide banner when component unmounts
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
-      AdMob.hideBanner().catch(console.error);
+      if (isNative) {
+        AdMob.removeBanner().catch(() => {});
+      }
     };
-  }, [isNative, isInitialized, isVisible]);
+  }, [isNative]);
 
   // Web placeholder (shown in browser during development)
   if (!isNative) {
