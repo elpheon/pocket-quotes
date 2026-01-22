@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Quote } from '@/lib/quotes';
 import { getQuoteOfTheDay, forceRefreshQOTD } from '@/lib/quoteOfTheDay';
 import { RefreshCw, Quote as QuoteIcon } from 'lucide-react';
@@ -11,8 +11,12 @@ export default function QuoteOfTheDay() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
+    // Only load once per component mount
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
     loadQuoteOfTheDay();
   }, []);
 

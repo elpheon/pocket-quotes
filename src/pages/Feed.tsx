@@ -11,6 +11,7 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [visibleAdKey, setVisibleAdKey] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
   const lastScrollTime = useRef(0);
@@ -113,22 +114,34 @@ export default function Feed() {
     }
   }, [currentIndex, quotes.length]);
 
-  // Build feed items (quotes + ads)
+  // Build feed items (quotes + ads) with their indices for visibility tracking
   const feedItems = useCallback(() => {
-    const items: { type: 'quote' | 'ad'; quote?: Quote; key: string }[] = [];
+    const items: { type: 'quote' | 'ad'; quote?: Quote; key: string; feedIndex: number }[] = [];
     let adCount = 0;
+    let feedIndex = 0;
     
     quotes.forEach((quote, index) => {
-      items.push({ type: 'quote', quote, key: `quote-${quote.id}` });
+      items.push({ type: 'quote', quote, key: `quote-${quote.id}`, feedIndex: feedIndex++ });
       
       // Insert ad after every 4th quote
       if (shouldShowAd(index)) {
-        items.push({ type: 'ad', key: `ad-${adCount++}` });
+        items.push({ type: 'ad', key: `ad-${adCount++}`, feedIndex: feedIndex++ });
       }
     });
     
     return items;
   }, [quotes]);
+
+  // Update visible ad based on current scroll position
+  useEffect(() => {
+    const items = feedItems();
+    const currentItem = items[currentIndex];
+    if (currentItem?.type === 'ad') {
+      setVisibleAdKey(currentItem.key);
+    } else {
+      setVisibleAdKey(null);
+    }
+  }, [currentIndex, feedItems]);
 
   if (loading) {
     return (
@@ -172,7 +185,7 @@ export default function Feed() {
               onShare={() => handleShare(item.quote!)}
             />
           ) : (
-            <AdBanner />
+            <AdBanner isVisible={visibleAdKey === item.key} />
           )}
         </div>
       ))}
