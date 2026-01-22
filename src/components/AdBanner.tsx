@@ -56,12 +56,14 @@ const INITIALIZE_FOR_TESTING = true;
 
 interface AdBannerProps {
   className?: string;
+  isVisible?: boolean; // Controls whether the ad overlay is shown
 }
 
-export function AdBanner({ className }: AdBannerProps) {
+export function AdBanner({ className, isVisible = true }: AdBannerProps) {
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [isNative, setIsNative] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const platform = Capacitor.getPlatform();
@@ -69,44 +71,59 @@ export function AdBanner({ className }: AdBannerProps) {
     setIsNative(isNativePlatform);
 
     if (!isNativePlatform) {
-      // Running in web browser - show placeholder
       return;
     }
 
-    // Initialize AdMob and show banner
-    const initializeAd = async () => {
+    // Initialize AdMob once
+    const initializeAdMob = async () => {
       try {
-        // Initialize AdMob (only needed once, but safe to call multiple times)
         await AdMob.initialize({
           initializeForTesting: INITIALIZE_FOR_TESTING,
         });
-
-        const adUnitId = platform === 'ios' ? AD_UNIT_IDS.ios : AD_UNIT_IDS.android;
-
-        const options: BannerAdOptions = {
-          adId: adUnitId,
-          adSize: BannerAdSize.ADAPTIVE_BANNER,
-          position: BannerAdPosition.CENTER,
-          margin: 0,
-        };
-
-        await AdMob.showBanner(options);
-        setAdLoaded(true);
+        setIsInitialized(true);
       } catch (error) {
-        console.error('AdMob error:', error);
-        setAdError(error instanceof Error ? error.message : 'Failed to load ad');
+        console.error('AdMob initialization error:', error);
+        setAdError(error instanceof Error ? error.message : 'Failed to initialize');
       }
     };
 
-    initializeAd();
+    initializeAdMob();
+  }, []);
+
+  // Show/hide banner based on visibility
+  useEffect(() => {
+    if (!isNative || !isInitialized) return;
+
+    const platform = Capacitor.getPlatform();
+    const adUnitId = platform === 'ios' ? AD_UNIT_IDS.ios : AD_UNIT_IDS.android;
+
+    const manageBanner = async () => {
+      try {
+        if (isVisible) {
+          const options: BannerAdOptions = {
+            adId: adUnitId,
+            adSize: BannerAdSize.ADAPTIVE_BANNER,
+            position: BannerAdPosition.CENTER,
+            margin: 0,
+          };
+          await AdMob.showBanner(options);
+          setAdLoaded(true);
+        } else {
+          await AdMob.hideBanner();
+        }
+      } catch (error) {
+        console.error('AdMob banner error:', error);
+        setAdError(error instanceof Error ? error.message : 'Failed to manage ad');
+      }
+    };
+
+    manageBanner();
 
     // Cleanup: hide banner when component unmounts
     return () => {
-      if (isNativePlatform) {
-        AdMob.hideBanner().catch(console.error);
-      }
+      AdMob.hideBanner().catch(console.error);
     };
-  }, []);
+  }, [isNative, isInitialized, isVisible]);
 
   // Web placeholder (shown in browser during development)
   if (!isNative) {

@@ -37,19 +37,25 @@ function isNative(): boolean {
  */
 async function getStoredQOTD(): Promise<StoredQOTD | null> {
   try {
+    let value: string | null = null;
+    
     if (isNative()) {
-      const { value } = await Preferences.get({ key: QOTD_KEY });
-      if (value) {
-        return JSON.parse(value);
-      }
+      const result = await Preferences.get({ key: QOTD_KEY });
+      value = result.value;
     } else {
-      const value = localStorage.getItem(QOTD_KEY);
-      if (value) {
-        return JSON.parse(value);
+      value = localStorage.getItem(QOTD_KEY);
+    }
+    
+    if (value) {
+      const parsed = JSON.parse(value) as StoredQOTD;
+      // Validate the stored data has required fields
+      if (parsed && parsed.quote && parsed.date) {
+        console.log('[QOTD] Found stored quote for date:', parsed.date);
+        return parsed;
       }
     }
   } catch (e) {
-    console.warn('Failed to get stored QOTD:', e);
+    console.warn('[QOTD] Failed to get stored QOTD:', e);
   }
   return null;
 }
@@ -60,13 +66,17 @@ async function getStoredQOTD(): Promise<StoredQOTD | null> {
 async function saveQOTD(data: StoredQOTD): Promise<void> {
   try {
     const value = JSON.stringify(data);
+    console.log('[QOTD] Saving quote for date:', data.date);
+    
     if (isNative()) {
       await Preferences.set({ key: QOTD_KEY, value });
     } else {
       localStorage.setItem(QOTD_KEY, value);
     }
+    
+    console.log('[QOTD] Successfully saved to storage');
   } catch (e) {
-    console.warn('Failed to save QOTD:', e);
+    console.warn('[QOTD] Failed to save QOTD:', e);
   }
 }
 
@@ -79,22 +89,30 @@ async function saveQOTD(data: StoredQOTD): Promise<void> {
  */
 export async function getQuoteOfTheDay(): Promise<Quote | null> {
   const today = getTodayDateString();
+  console.log('[QOTD] Getting quote for today:', today);
   
   // Check if we have a stored quote for today
   const stored = await getStoredQOTD();
-  if (stored && stored.date === today) {
+  
+  if (stored && stored.date === today && stored.quote) {
+    console.log('[QOTD] Using stored quote from today');
     return stored.quote;
   }
+  
+  console.log('[QOTD] No valid quote for today, selecting new one');
   
   // No quote for today, select a new one
   const allQuotes = await loadQuotes();
   if (allQuotes.length === 0) {
+    console.log('[QOTD] No quotes available');
     return null;
   }
   
   // Randomly select a quote
   const randomIndex = Math.floor(Math.random() * allQuotes.length);
   const selectedQuote = allQuotes[randomIndex];
+  
+  console.log('[QOTD] Selected new quote:', selectedQuote.id);
   
   // Save it with today's date
   await saveQOTD({
