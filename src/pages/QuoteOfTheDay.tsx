@@ -1,16 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Quote } from '@/lib/quotes';
-import { getQuoteOfTheDay, forceRefreshQOTD } from '@/lib/quoteOfTheDay';
-import { RefreshCw, Quote as QuoteIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-// Set to false for production builds
-const IS_DEVELOPMENT = true;
+import { getQuoteOfTheDay } from '@/lib/quoteOfTheDay';
+import { Quote as QuoteIcon } from 'lucide-react';
 
 export default function QuoteOfTheDay() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -25,13 +20,6 @@ export default function QuoteOfTheDay() {
     const qotd = await getQuoteOfTheDay();
     setQuote(qotd);
     setIsLoading(false);
-  };
-
-  const handleDevRefresh = async () => {
-    setIsRefreshing(true);
-    const newQuote = await forceRefreshQOTD();
-    setQuote(newQuote);
-    setIsRefreshing(false);
   };
 
   if (isLoading) {
@@ -55,21 +43,8 @@ export default function QuoteOfTheDay() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
+      <header className="border-b border-border px-4 py-3">
         <h1 className="text-lg font-bold text-foreground">Quote of the Day</h1>
-        
-        {/* Dev refresh button - only shown in development */}
-        {IS_DEVELOPMENT && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDevRefresh}
-            disabled={isRefreshing}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-        )}
       </header>
 
       {/* Quote Display */}
