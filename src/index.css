@@ -155,3 +155,12 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Safe area utilities for mobile devices with gesture navigation or home buttons */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-mb {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
