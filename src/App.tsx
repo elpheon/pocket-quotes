@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { GeometricBackground } from "@/components/GeometricBackground";
 import { initializeNotifications } from "@/lib/notifications";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { getTheme } from "@/lib/settings";
 import Feed from "./pages/Feed";
 import Saved from "./pages/Saved";
 import About from "./pages/About";
@@ -16,6 +17,22 @@ import QuoteOfTheDay from "./pages/QuoteOfTheDay";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Initialize theme on app load (before React renders)
+function initializeTheme() {
+  const savedTheme = getTheme();
+  const isDark = savedTheme === 'dark' || 
+    (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
+
+// Run immediately
+initializeTheme();
 
 function AppContent() {
   const navigate = useNavigate();
