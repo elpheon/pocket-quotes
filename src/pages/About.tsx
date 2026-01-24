@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff } from 'lucide-react';
+import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff, Grid3X3 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme } from '@/lib/settings';
+import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme, getShowBackground, setShowBackground as saveShowBackground } from '@/lib/settings';
 import { submitQuote } from '@/lib/submitQuote';
 import { toast } from '@/hooks/use-toast';
 import { hapticLight, hapticSuccess } from '@/lib/haptics';
@@ -30,10 +30,12 @@ export default function About() {
   const [authorText, setAuthorText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showBackground, setShowBackgroundState] = useState(true);
   const [networkOnline, setNetworkOnline] = useState(isOnline());
 
   useEffect(() => {
     setHideNSFWState(getHideNSFW());
+    setShowBackgroundState(getShowBackground());
     const savedTheme = getTheme();
     const isDark = savedTheme === 'dark' || 
       (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -61,6 +63,14 @@ export default function About() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  };
+
+  const handleToggleBackground = (checked: boolean) => {
+    setShowBackgroundState(checked);
+    saveShowBackground(checked);
+    hapticLight();
+    // Dispatch custom event for App.tsx to listen to
+    window.dispatchEvent(new CustomEvent('backgroundSettingChanged', { detail: checked }));
   };
 
   const handleRateApp = () => {
@@ -268,6 +278,20 @@ export default function About() {
               id="hide-nsfw"
               checked={hideNSFW}
               onCheckedChange={handleToggleNSFW}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4" />
+              <Label htmlFor="show-background" className="text-sm text-foreground">
+                Show background pattern
+              </Label>
+            </div>
+            <Switch
+              id="show-background"
+              checked={showBackground}
+              onCheckedChange={handleToggleBackground}
             />
           </div>
         </div>
