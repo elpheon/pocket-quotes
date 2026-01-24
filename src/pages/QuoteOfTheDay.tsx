@@ -42,8 +42,8 @@ export default function QuoteOfTheDay() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="border-b border-border px-4 py-3">
+      {/* Header with safe area for phone notch/bevel */}
+      <header className="border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <h1 className="text-lg font-bold text-foreground">Quote of the Day</h1>
       </header>
 

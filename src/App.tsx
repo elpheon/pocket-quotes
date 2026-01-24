@@ -28,9 +28,9 @@ function AppContent() {
     });
   }, [navigate]);
 
-  return (
+    return (
     <div 
-      className="flex h-screen flex-col bg-background"
+      className="flex h-screen flex-col"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >

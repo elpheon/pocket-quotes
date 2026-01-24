@@ -54,7 +54,7 @@ export default function Saved() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
+      <div className="flex h-full items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
       </div>
     );
@@ -62,7 +62,7 @@ export default function Saved() {
 
   if (savedQuotes.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-background px-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center px-8 text-center">
         <Heart className="mb-4 h-16 w-16 text-muted-foreground/30" />
         <p className="text-xl font-medium text-foreground">No saved quotes yet</p>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -73,8 +73,8 @@ export default function Saved() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
-      <div className="px-4 py-6">
+    <div className="h-full overflow-y-auto">
+      <div className="px-4 py-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
         <h1 className="mb-6 text-2xl font-bold text-foreground">Saved Quotes</h1>
         
         <div className="space-y-4">
