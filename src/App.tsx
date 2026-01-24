@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { GeometricBackground } from "@/components/GeometricBackground";
 import { initializeNotifications } from "@/lib/notifications";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import { getTheme } from "@/lib/settings";
+import { getTheme, getShowBackground } from "@/lib/settings";
 import Feed from "./pages/Feed";
 import Saved from "./pages/Saved";
 import About from "./pages/About";
@@ -37,12 +37,22 @@ initializeTheme();
 function AppContent() {
   const navigate = useNavigate();
   const { onTouchStart, onTouchEnd } = useSwipeNavigation();
+  const [showBackground, setShowBackground] = useState(getShowBackground());
 
   useEffect(() => {
     // Initialize notifications and handle notification taps
     initializeNotifications((route) => {
       navigate(route);
     });
+
+    // Listen for background setting changes
+    const handleBackgroundChange = (e: CustomEvent<boolean>) => {
+      setShowBackground(e.detail);
+    };
+    window.addEventListener('backgroundSettingChanged', handleBackgroundChange as EventListener);
+    return () => {
+      window.removeEventListener('backgroundSettingChanged', handleBackgroundChange as EventListener);
+    };
   }, [navigate]);
 
     return (
@@ -52,7 +62,7 @@ function AppContent() {
       onTouchEnd={onTouchEnd}
     >
       {/* Geometric background pattern */}
-      <GeometricBackground />
+      {showBackground && <GeometricBackground />}
       
       {/* Main content area - takes remaining space above nav */}
       <main className="flex-1 overflow-hidden pb-16">
