@@ -4,83 +4,147 @@ export function GeometricBackground() {
       {/* Base background */}
       <div className="absolute inset-0 bg-background" />
       
-      {/* Light mode - minimal animated pattern */}
+      {/* Light mode - minimal geometric lines */}
       <svg
         className="absolute inset-0 h-full w-full dark:hidden"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Subtle dot grid */}
+          {/* Triangle grid pattern */}
           <pattern
-            id="dots-light"
+            id="triangles-light"
             x="0"
             y="0"
-            width="60"
-            height="60"
+            width="100"
+            height="87"
             patternUnits="userSpaceOnUse"
           >
-            <circle cx="30" cy="30" r="1.5" fill="hsl(215 20% 75%)" />
+            {/* Triangle pointing up */}
+            <path
+              d="M50 0 L100 87 L0 87 Z"
+              fill="none"
+              stroke="hsl(215 20% 80%)"
+              strokeWidth="0.5"
+            />
+            {/* Connecting lines */}
+            <line x1="25" y1="43.5" x2="75" y2="43.5" stroke="hsl(215 20% 85%)" strokeWidth="0.3" />
           </pattern>
-
-          {/* Single large circle - animated */}
-          <radialGradient id="glow-light" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="hsl(215 20% 80%)" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="hsl(215 20% 80%)" stopOpacity="0" />
-          </radialGradient>
         </defs>
         
-        {/* Dot pattern */}
-        <rect width="100%" height="100%" fill="url(#dots-light)" />
+        {/* Base triangle pattern */}
+        <rect width="100%" height="100%" fill="url(#triangles-light)" />
         
-        {/* Floating circles - subtle animation */}
-        <g className="animate-[float_20s_ease-in-out_infinite]">
-          <circle cx="20%" cy="30%" r="200" fill="url(#glow-light)" />
+        {/* Animated floating geometric shapes */}
+        <g className="animate-[float_25s_ease-in-out_infinite]" opacity="0.4">
+          {/* Large triangle */}
+          <path
+            d="M200 100 L350 350 L50 350 Z"
+            fill="none"
+            stroke="hsl(215 20% 70%)"
+            strokeWidth="1"
+          />
         </g>
-        <g className="animate-[float_25s_ease-in-out_infinite_reverse]">
-          <circle cx="80%" cy="70%" r="250" fill="url(#glow-light)" />
+        
+        <g className="animate-[float_30s_ease-in-out_infinite_reverse]" opacity="0.3">
+          {/* Hexagon */}
+          <path
+            d="M850 200 L920 240 L920 320 L850 360 L780 320 L780 240 Z"
+            fill="none"
+            stroke="hsl(215 20% 75%)"
+            strokeWidth="1"
+          />
         </g>
-        <g className="animate-[float_30s_ease-in-out_infinite]" style={{ animationDelay: '-10s' }}>
-          <circle cx="50%" cy="50%" r="180" fill="url(#glow-light)" />
+        
+        <g className="animate-[float_20s_ease-in-out_infinite]" style={{ animationDelay: '-8s' }} opacity="0.35">
+          {/* Diamond */}
+          <path
+            d="M500 450 L600 550 L500 650 L400 550 Z"
+            fill="none"
+            stroke="hsl(215 20% 72%)"
+            strokeWidth="1"
+          />
+        </g>
+
+        <g className="animate-[float_35s_ease-in-out_infinite]" style={{ animationDelay: '-15s' }} opacity="0.25">
+          {/* Large square rotated */}
+          <path
+            d="M1100 300 L1250 450 L1100 600 L950 450 Z"
+            fill="none"
+            stroke="hsl(215 20% 78%)"
+            strokeWidth="0.8"
+          />
         </g>
       </svg>
 
-      {/* Dark mode - minimal animated pattern */}
+      {/* Dark mode - minimal geometric lines */}
       <svg
         className="absolute inset-0 h-full w-full hidden dark:block"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Subtle dot grid */}
+          {/* Triangle grid pattern */}
           <pattern
-            id="dots-dark"
+            id="triangles-dark"
             x="0"
             y="0"
-            width="60"
-            height="60"
+            width="100"
+            height="87"
             patternUnits="userSpaceOnUse"
           >
-            <circle cx="30" cy="30" r="1.5" fill="hsl(215 16% 30%)" />
+            {/* Triangle pointing up */}
+            <path
+              d="M50 0 L100 87 L0 87 Z"
+              fill="none"
+              stroke="hsl(215 16% 25%)"
+              strokeWidth="0.5"
+            />
+            {/* Connecting lines */}
+            <line x1="25" y1="43.5" x2="75" y2="43.5" stroke="hsl(215 16% 22%)" strokeWidth="0.3" />
           </pattern>
-
-          {/* Single large circle - animated */}
-          <radialGradient id="glow-dark" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="hsl(215 16% 25%)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="hsl(215 16% 25%)" stopOpacity="0" />
-          </radialGradient>
         </defs>
         
-        {/* Dot pattern */}
-        <rect width="100%" height="100%" fill="url(#dots-dark)" />
+        {/* Base triangle pattern */}
+        <rect width="100%" height="100%" fill="url(#triangles-dark)" />
         
-        {/* Floating circles - subtle animation */}
-        <g className="animate-[float_20s_ease-in-out_infinite]">
-          <circle cx="20%" cy="30%" r="200" fill="url(#glow-dark)" />
+        {/* Animated floating geometric shapes */}
+        <g className="animate-[float_25s_ease-in-out_infinite]" opacity="0.5">
+          {/* Large triangle */}
+          <path
+            d="M200 100 L350 350 L50 350 Z"
+            fill="none"
+            stroke="hsl(215 16% 35%)"
+            strokeWidth="1"
+          />
         </g>
-        <g className="animate-[float_25s_ease-in-out_infinite_reverse]">
-          <circle cx="80%" cy="70%" r="250" fill="url(#glow-dark)" />
+        
+        <g className="animate-[float_30s_ease-in-out_infinite_reverse]" opacity="0.4">
+          {/* Hexagon */}
+          <path
+            d="M850 200 L920 240 L920 320 L850 360 L780 320 L780 240 Z"
+            fill="none"
+            stroke="hsl(215 16% 32%)"
+            strokeWidth="1"
+          />
         </g>
-        <g className="animate-[float_30s_ease-in-out_infinite]" style={{ animationDelay: '-10s' }}>
-          <circle cx="50%" cy="50%" r="180" fill="url(#glow-dark)" />
+        
+        <g className="animate-[float_20s_ease-in-out_infinite]" style={{ animationDelay: '-8s' }} opacity="0.45">
+          {/* Diamond */}
+          <path
+            d="M500 450 L600 550 L500 650 L400 550 Z"
+            fill="none"
+            stroke="hsl(215 16% 33%)"
+            strokeWidth="1"
+          />
+        </g>
+
+        <g className="animate-[float_35s_ease-in-out_infinite]" style={{ animationDelay: '-15s' }} opacity="0.35">
+          {/* Large square rotated */}
+          <path
+            d="M1100 300 L1250 450 L1100 600 L950 450 Z"
+            fill="none"
+            stroke="hsl(215 16% 30%)"
+            strokeWidth="0.8"
+          />
         </g>
       </svg>
     </div>
