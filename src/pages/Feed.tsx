@@ -6,6 +6,9 @@ import { QuoteCard } from '@/components/QuoteCard';
 import { AdBanner, shouldShowAd } from '@/components/AdBanner';
 import { Loader2 } from 'lucide-react';
 
+// Refresh quotes every 5 minutes when app is active
+const REFRESH_INTERVAL = 5 * 60 * 1000;
+
 export default function Feed() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,39 +18,88 @@ export default function Feed() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
   const lastScrollTime = useRef(0);
+  const lastRefreshTime = useRef(0);
 
-  // Load quotes on mount and when returning to feed
-  useEffect(() => {
-    async function init() {
-      try {
-        const loadedQuotes = await loadQuotes();
-        
-        // Filter NSFW if setting is enabled
-        const hideNSFW = getHideNSFW();
-        const filteredQuotes = hideNSFW 
-          ? loadedQuotes.filter(q => !q.tags?.some(tag => tag.toLowerCase() === 'nsfw'))
-          : loadedQuotes;
-        
+  // Function to load/refresh quotes
+  const refreshQuotes = useCallback(async (isInitialLoad = false) => {
+    try {
+      const loadedQuotes = await loadQuotes();
+      
+      // Filter NSFW if setting is enabled
+      const hideNSFW = getHideNSFW();
+      const filteredQuotes = hideNSFW 
+        ? loadedQuotes.filter(q => !q.tags?.some(tag => tag.toLowerCase() === 'nsfw'))
+        : loadedQuotes;
+      
+      // Only shuffle on initial load, not on refresh (to avoid jarring UX)
+      if (isInitialLoad) {
         const shuffled = shuffleQuotes(filteredQuotes);
         setQuotes(shuffled);
-        
-        // Clean up favorites for quotes that no longer exist
-        cleanupFavorites(new Set(loadedQuotes.map(q => q.id)));
-        
-        // Initialize favorites state
-        const favIds = new Set<string>();
-        loadedQuotes.forEach(q => {
-          if (isFavorite(q.id)) favIds.add(q.id);
+      } else {
+        // Merge new quotes while preserving order for existing ones
+        setQuotes(prevQuotes => {
+          const existingIds = new Set(prevQuotes.map(q => q.id));
+          const newQuotes = filteredQuotes.filter(q => !existingIds.has(q.id));
+          if (newQuotes.length > 0) {
+            // Add new quotes to the end
+            return [...prevQuotes, ...shuffleQuotes(newQuotes)];
+          }
+          return prevQuotes;
         });
-        setFavorites(favIds);
-      } catch (e) {
-        console.error('Failed to load quotes:', e);
-      } finally {
-        setLoading(false);
       }
+      
+      // Clean up favorites for quotes that no longer exist
+      cleanupFavorites(new Set(loadedQuotes.map(q => q.id)));
+      
+      // Initialize/update favorites state
+      const favIds = new Set<string>();
+      loadedQuotes.forEach(q => {
+        if (isFavorite(q.id)) favIds.add(q.id);
+      });
+      setFavorites(favIds);
+      
+      lastRefreshTime.current = Date.now();
+    } catch (e) {
+      console.error('Failed to load quotes:', e);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    async function init() {
+      await refreshQuotes(true);
+      setLoading(false);
     }
     init();
-  }, []);
+  }, [refreshQuotes]);
+
+  // Auto-refresh on visibility change (when app comes to foreground) and periodic refresh
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const timeSinceLastRefresh = Date.now() - lastRefreshTime.current;
+        // Refresh if it's been more than 1 minute since last refresh
+        if (timeSinceLastRefresh > 60000) {
+          refreshQuotes(false);
+        }
+      }
+    };
+
+    // Set up visibility change listener (for when app comes back to foreground)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Set up periodic refresh
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshQuotes(false);
+      }
+    }, REFRESH_INTERVAL);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(intervalId);
+    };
+  }, [refreshQuotes]);
 
   // Handle favorite toggle
   const handleToggleFavorite = useCallback((quoteId: string) => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon } from 'lucide-react';
+import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -11,6 +11,7 @@ import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme } from '@/lib
 import { submitQuote } from '@/lib/submitQuote';
 import { toast } from '@/hooks/use-toast';
 import { hapticLight, hapticSuccess } from '@/lib/haptics';
+import { isOnline, onNetworkChange } from '@/lib/network';
 
 const QUOTE_MAX_LENGTH = 300;
 const AUTHOR_MAX_LENGTH = 40;
@@ -29,6 +30,7 @@ export default function About() {
   const [authorText, setAuthorText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [networkOnline, setNetworkOnline] = useState(isOnline());
 
   useEffect(() => {
     setHideNSFWState(getHideNSFW());
@@ -36,6 +38,10 @@ export default function About() {
     const isDark = savedTheme === 'dark' || 
       (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setIsDarkMode(isDark);
+
+    // Subscribe to network changes
+    const cleanup = onNetworkChange(setNetworkOnline);
+    return cleanup;
   }, []);
 
   const handleToggleNSFW = (checked: boolean) => {
@@ -84,6 +90,16 @@ export default function About() {
   };
 
   const handleSubmitQuote = async () => {
+    // Check network connectivity first
+    if (!isOnline()) {
+      toast({
+        title: "No internet connection",
+        description: "You need Wi-Fi or cellular service to submit quotes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!quoteText.trim() || !authorText.trim()) {
       toast({
         title: "Missing fields",
@@ -151,6 +167,16 @@ export default function About() {
         {/* Quote Submission Form */}
         <div className="mb-6 w-full max-w-sm rounded-lg border border-border bg-card p-4">
           <h2 className="mb-4 text-lg font-semibold text-foreground">Submit a Quote</h2>
+          
+          {/* Offline Warning */}
+          {!networkOnline && (
+            <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-left">
+              <WifiOff className="h-4 w-4 shrink-0 text-destructive" />
+              <p className="text-sm text-destructive">
+                You need Wi-Fi or cellular service to submit quotes.
+              </p>
+            </div>
+          )}
           
           <div className="space-y-3">
             <div className="text-left">
