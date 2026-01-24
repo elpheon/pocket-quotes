@@ -1,6 +1,6 @@
 // ============================================================
 // PRODUCTION: Replace this with your Google Apps Script Web App URL
-// 
+//
 // To set up quote submissions:
 // 1. Create a new Google Sheet for submissions
 // 2. Go to Extensions > Apps Script
@@ -23,7 +23,8 @@
 // 5. Copy the web app URL here
 // ============================================================
 
-const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+const GOOGLE_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbzJ2C_NX0L-8rmY1ELNWs_4m2omPe-q0sIUMaA06ndd0bJpfM1PxPgiMrBpxApaJprF1Q/exec";
 
 export interface QuoteSubmission {
   quote: string;
@@ -32,26 +33,26 @@ export interface QuoteSubmission {
 
 export async function submitQuote(submission: QuoteSubmission): Promise<boolean> {
   // For development/demo purposes, log the submission
-  if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-    console.log('Quote submission (no URL configured):', submission);
+  if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+    console.log("Quote submission (no URL configured):", submission);
     // Return true for demo purposes
     return true;
   }
 
   try {
     const response = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors', // Google Apps Script requires this
+      method: "POST",
+      mode: "no-cors", // Google Apps Script requires this
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(submission),
     });
-    
+
     // no-cors mode doesn't give us response data, so we assume success
     return true;
   } catch (error) {
-    console.error('Failed to submit quote:', error);
+    console.error("Failed to submit quote:", error);
     return false;
   }
 }
