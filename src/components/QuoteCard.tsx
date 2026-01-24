@@ -4,6 +4,7 @@ import { Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useDoubleTap } from '@/hooks/useDoubleTap';
+import { hapticMedium } from '@/lib/haptics';
 
 interface QuoteCardProps {
   quote: Quote;
@@ -20,6 +21,8 @@ export function QuoteCard({ quote, isFavorite, onToggleFavorite, onShare }: Quot
       if (!isFavorite) {
         onToggleFavorite();
       }
+      // Trigger haptic feedback
+      hapticMedium();
       // Show heart animation
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 600);

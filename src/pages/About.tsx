@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme } from '@/lib/settings';
 import { submitQuote } from '@/lib/submitQuote';
 import { toast } from '@/hooks/use-toast';
+import { hapticLight, hapticSuccess } from '@/lib/haptics';
 
 const QUOTE_MAX_LENGTH = 300;
 const AUTHOR_MAX_LENGTH = 40;
@@ -40,12 +41,14 @@ export default function About() {
   const handleToggleNSFW = (checked: boolean) => {
     setHideNSFWState(checked);
     setHideNSFW(checked);
+    hapticLight();
   };
 
   const handleToggleTheme = (checked: boolean) => {
     setIsDarkMode(checked);
     const newTheme = checked ? 'dark' : 'light';
     saveTheme(newTheme);
+    hapticLight();
     
     if (checked) {
       document.documentElement.classList.add('dark');
@@ -99,6 +102,7 @@ export default function About() {
       });
 
       if (success) {
+        hapticSuccess();
         toast({
           title: "Quote submitted!",
           description: "Thanks for your submission. We'll review it soon!",
