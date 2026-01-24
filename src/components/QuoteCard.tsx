@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Quote } from '@/lib/quotes';
 import { Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useDoubleTap } from '@/hooks/useDoubleTap';
 
 interface QuoteCardProps {
   quote: Quote;
@@ -11,8 +13,33 @@ interface QuoteCardProps {
 }
 
 export function QuoteCard({ quote, isFavorite, onToggleFavorite, onShare }: QuoteCardProps) {
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
+
+  const handleDoubleTap = useDoubleTap({
+    onDoubleTap: () => {
+      if (!isFavorite) {
+        onToggleFavorite();
+      }
+      // Show heart animation
+      setShowHeartAnimation(true);
+      setTimeout(() => setShowHeartAnimation(false), 600);
+    },
+  });
+
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center px-8 py-16">
+    <div 
+      className="relative flex h-full w-full flex-col items-center justify-center px-8 py-16"
+      onClick={handleDoubleTap}
+    >
+      {/* Double-tap heart animation */}
+      {showHeartAnimation && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <Heart 
+            className="h-24 w-24 animate-ping fill-destructive text-destructive opacity-75" 
+          />
+        </div>
+      )}
+
       {/* Quote text */}
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <p className="mb-6 font-serif text-3xl font-medium leading-relaxed text-foreground sm:text-4xl md:text-5xl">
@@ -46,7 +73,10 @@ export function QuoteCard({ quote, isFavorite, onToggleFavorite, onShare }: Quot
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggleFavorite}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite();
+          }}
           className={cn(
             "h-14 w-14 rounded-full bg-card/80 backdrop-blur-sm transition-all duration-200",
             isFavorite && "text-destructive"
@@ -61,7 +91,10 @@ export function QuoteCard({ quote, isFavorite, onToggleFavorite, onShare }: Quot
         <Button
           variant="ghost"
           size="icon"
-          onClick={onShare}
+          onClick={(e) => {
+            e.stopPropagation();
+            onShare();
+          }}
           className="h-14 w-14 rounded-full bg-card/80 backdrop-blur-sm"
           aria-label="Share quote"
         >

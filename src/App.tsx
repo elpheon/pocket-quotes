@@ -5,7 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
+import { GeometricBackground } from "@/components/GeometricBackground";
 import { initializeNotifications } from "@/lib/notifications";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import Feed from "./pages/Feed";
 import Saved from "./pages/Saved";
 import About from "./pages/About";
@@ -17,6 +19,7 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const navigate = useNavigate();
+  const { onTouchStart, onTouchEnd } = useSwipeNavigation();
 
   useEffect(() => {
     // Initialize notifications and handle notification taps
@@ -26,7 +29,14 @@ function AppContent() {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div 
+      className="flex h-screen flex-col bg-background"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Geometric background pattern */}
+      <GeometricBackground />
+      
       {/* Main content area - takes remaining space above nav */}
       <main className="flex-1 overflow-hidden pb-16">
         <Routes>
