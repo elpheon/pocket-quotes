@@ -145,7 +145,7 @@ export default function Feed() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-background">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -153,7 +153,7 @@ export default function Feed() {
 
   if (quotes.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-background px-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center px-8 text-center">
         <p className="text-xl text-muted-foreground">No quotes yet</p>
         <p className="mt-2 text-sm text-muted-foreground/70">
           Configure your Google Sheet URL to load quotes
@@ -168,7 +168,7 @@ export default function Feed() {
     <div 
       ref={containerRef}
       onScroll={handleScroll}
-      className="h-full w-full snap-y snap-mandatory overflow-y-auto bg-background"
+      className="h-full w-full snap-y snap-mandatory overflow-y-auto"
       style={{ scrollSnapType: 'y mandatory' }}
     >
       {items.map((item) => (
