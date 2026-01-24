@@ -4,146 +4,198 @@ export function GeometricBackground() {
       {/* Base background */}
       <div className="absolute inset-0 bg-background" />
       
-      {/* Light mode - minimal geometric lines */}
+      {/* Light mode - diagonal square grid */}
       <svg
         className="absolute inset-0 h-full w-full dark:hidden"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Triangle grid pattern */}
+          {/* Diagonal square/diamond grid pattern */}
           <pattern
-            id="triangles-light"
+            id="diamonds-light"
             x="0"
             y="0"
-            width="100"
-            height="87"
+            width="60"
+            height="60"
             patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
           >
-            {/* Triangle pointing up */}
-            <path
-              d="M50 0 L100 87 L0 87 Z"
+            <rect
+              x="0"
+              y="0"
+              width="60"
+              height="60"
               fill="none"
-              stroke="hsl(215 20% 80%)"
+              stroke="hsl(215 20% 82%)"
               strokeWidth="0.5"
             />
-            {/* Connecting lines */}
-            <line x1="25" y1="43.5" x2="75" y2="43.5" stroke="hsl(215 20% 85%)" strokeWidth="0.3" />
           </pattern>
         </defs>
         
-        {/* Base triangle pattern */}
-        <rect width="100%" height="100%" fill="url(#triangles-light)" />
+        {/* Base diamond grid pattern */}
+        <rect width="100%" height="100%" fill="url(#diamonds-light)" />
         
-        {/* Animated floating geometric shapes */}
-        <g className="animate-[float_25s_ease-in-out_infinite]" opacity="0.4">
-          {/* Large triangle */}
-          <path
-            d="M200 100 L350 350 L50 350 Z"
+        {/* Animated floating diamond shapes */}
+        <g className="animate-[float_25s_ease-in-out_infinite]" opacity="0.35">
+          <rect
+            x="100"
+            y="150"
+            width="120"
+            height="120"
             fill="none"
-            stroke="hsl(215 20% 70%)"
+            stroke="hsl(215 20% 72%)"
             strokeWidth="1"
+            transform="rotate(45 160 210)"
           />
         </g>
         
         <g className="animate-[float_30s_ease-in-out_infinite_reverse]" opacity="0.3">
-          {/* Hexagon */}
-          <path
-            d="M850 200 L920 240 L920 320 L850 360 L780 320 L780 240 Z"
+          <rect
+            x="750"
+            y="100"
+            width="150"
+            height="150"
             fill="none"
             stroke="hsl(215 20% 75%)"
             strokeWidth="1"
+            transform="rotate(45 825 175)"
           />
         </g>
         
-        <g className="animate-[float_20s_ease-in-out_infinite]" style={{ animationDelay: '-8s' }} opacity="0.35">
-          {/* Diamond */}
-          <path
-            d="M500 450 L600 550 L500 650 L400 550 Z"
+        <g className="animate-[float_20s_ease-in-out_infinite]" style={{ animationDelay: '-8s' }} opacity="0.4">
+          <rect
+            x="400"
+            y="400"
+            width="100"
+            height="100"
             fill="none"
-            stroke="hsl(215 20% 72%)"
+            stroke="hsl(215 20% 70%)"
             strokeWidth="1"
+            transform="rotate(45 450 450)"
           />
         </g>
 
         <g className="animate-[float_35s_ease-in-out_infinite]" style={{ animationDelay: '-15s' }} opacity="0.25">
-          {/* Large square rotated */}
-          <path
-            d="M1100 300 L1250 450 L1100 600 L950 450 Z"
+          <rect
+            x="950"
+            y="350"
+            width="180"
+            height="180"
             fill="none"
             stroke="hsl(215 20% 78%)"
             strokeWidth="0.8"
+            transform="rotate(45 1040 440)"
+          />
+        </g>
+
+        <g className="animate-[float_28s_ease-in-out_infinite]" style={{ animationDelay: '-5s' }} opacity="0.3">
+          <rect
+            x="200"
+            y="500"
+            width="80"
+            height="80"
+            fill="none"
+            stroke="hsl(215 20% 74%)"
+            strokeWidth="0.8"
+            transform="rotate(45 240 540)"
           />
         </g>
       </svg>
 
-      {/* Dark mode - minimal geometric lines */}
+      {/* Dark mode - diagonal square grid */}
       <svg
         className="absolute inset-0 h-full w-full hidden dark:block"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Triangle grid pattern */}
+          {/* Diagonal square/diamond grid pattern */}
           <pattern
-            id="triangles-dark"
+            id="diamonds-dark"
             x="0"
             y="0"
-            width="100"
-            height="87"
+            width="60"
+            height="60"
             patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
           >
-            {/* Triangle pointing up */}
-            <path
-              d="M50 0 L100 87 L0 87 Z"
+            <rect
+              x="0"
+              y="0"
+              width="60"
+              height="60"
               fill="none"
-              stroke="hsl(215 16% 25%)"
+              stroke="hsl(215 16% 24%)"
               strokeWidth="0.5"
             />
-            {/* Connecting lines */}
-            <line x1="25" y1="43.5" x2="75" y2="43.5" stroke="hsl(215 16% 22%)" strokeWidth="0.3" />
           </pattern>
         </defs>
         
-        {/* Base triangle pattern */}
-        <rect width="100%" height="100%" fill="url(#triangles-dark)" />
+        {/* Base diamond grid pattern */}
+        <rect width="100%" height="100%" fill="url(#diamonds-dark)" />
         
-        {/* Animated floating geometric shapes */}
-        <g className="animate-[float_25s_ease-in-out_infinite]" opacity="0.5">
-          {/* Large triangle */}
-          <path
-            d="M200 100 L350 350 L50 350 Z"
+        {/* Animated floating diamond shapes */}
+        <g className="animate-[float_25s_ease-in-out_infinite]" opacity="0.45">
+          <rect
+            x="100"
+            y="150"
+            width="120"
+            height="120"
             fill="none"
             stroke="hsl(215 16% 35%)"
             strokeWidth="1"
+            transform="rotate(45 160 210)"
           />
         </g>
         
         <g className="animate-[float_30s_ease-in-out_infinite_reverse]" opacity="0.4">
-          {/* Hexagon */}
-          <path
-            d="M850 200 L920 240 L920 320 L850 360 L780 320 L780 240 Z"
+          <rect
+            x="750"
+            y="100"
+            width="150"
+            height="150"
             fill="none"
             stroke="hsl(215 16% 32%)"
             strokeWidth="1"
+            transform="rotate(45 825 175)"
           />
         </g>
         
-        <g className="animate-[float_20s_ease-in-out_infinite]" style={{ animationDelay: '-8s' }} opacity="0.45">
-          {/* Diamond */}
-          <path
-            d="M500 450 L600 550 L500 650 L400 550 Z"
+        <g className="animate-[float_20s_ease-in-out_infinite]" style={{ animationDelay: '-8s' }} opacity="0.5">
+          <rect
+            x="400"
+            y="400"
+            width="100"
+            height="100"
             fill="none"
-            stroke="hsl(215 16% 33%)"
+            stroke="hsl(215 16% 36%)"
             strokeWidth="1"
+            transform="rotate(45 450 450)"
           />
         </g>
 
         <g className="animate-[float_35s_ease-in-out_infinite]" style={{ animationDelay: '-15s' }} opacity="0.35">
-          {/* Large square rotated */}
-          <path
-            d="M1100 300 L1250 450 L1100 600 L950 450 Z"
+          <rect
+            x="950"
+            y="350"
+            width="180"
+            height="180"
             fill="none"
             stroke="hsl(215 16% 30%)"
             strokeWidth="0.8"
+            transform="rotate(45 1040 440)"
+          />
+        </g>
+
+        <g className="animate-[float_28s_ease-in-out_infinite]" style={{ animationDelay: '-5s' }} opacity="0.4">
+          <rect
+            x="200"
+            y="500"
+            width="80"
+            height="80"
+            fill="none"
+            stroke="hsl(215 16% 33%)"
+            strokeWidth="0.8"
+            transform="rotate(45 240 540)"
           />
         </g>
       </svg>
