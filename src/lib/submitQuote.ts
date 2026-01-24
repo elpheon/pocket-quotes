@@ -32,10 +32,9 @@ export interface QuoteSubmission {
 }
 
 export async function submitQuote(submission: QuoteSubmission): Promise<boolean> {
-  // For development/demo purposes, log the submission
-  if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+  // Check if the URL has been configured
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.length === 0) {
     console.log("Quote submission (no URL configured):", submission);
-    // Return true for demo purposes
     return true;
   }
 
