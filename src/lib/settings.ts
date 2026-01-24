@@ -3,6 +3,9 @@
  */
 
 const HIDE_NSFW_KEY = "outofpocket_hide_nsfw";
+const THEME_KEY = "outofpocket_theme";
+
+export type Theme = 'light' | 'dark' | 'system';
 
 export function getHideNSFW(): boolean {
   try {
@@ -17,5 +20,25 @@ export function setHideNSFW(value: boolean): void {
     localStorage.setItem(HIDE_NSFW_KEY, value.toString());
   } catch (e) {
     console.warn("Failed to save NSFW setting:", e);
+  }
+}
+
+export function getTheme(): Theme {
+  try {
+    const theme = localStorage.getItem(THEME_KEY);
+    if (theme === 'light' || theme === 'dark' || theme === 'system') {
+      return theme;
+    }
+    return 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+export function setTheme(value: Theme): void {
+  try {
+    localStorage.setItem(THEME_KEY, value);
+  } catch (e) {
+    console.warn("Failed to save theme setting:", e);
   }
 }

@@ -1,22 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Shield, ExternalLink, Send, Loader2 } from 'lucide-react';
+import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getHideNSFW, setHideNSFW } from '@/lib/settings';
+import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme } from '@/lib/settings';
 import { submitQuote } from '@/lib/submitQuote';
 import { toast } from '@/hooks/use-toast';
+
+const QUOTE_MAX_LENGTH = 300;
+const AUTHOR_MAX_LENGTH = 40;
 
 // ============================================================
 // PRODUCTION: Replace these with your actual App Store URLs
 // ============================================================
 const STORE_URLS = {
-  ios: 'https://apps.apple.com/app/id000000000', // Replace with your App Store ID
-  android: 'https://play.google.com/store/apps/details?id=com.yourcompany.outofpocket', // Replace with your package name
+  ios: 'https://apps.apple.com/app/id000000000',
+  android: 'https://play.google.com/store/apps/details?id=com.yourcompany.outofpocket',
 };
 
 export default function About() {
@@ -24,14 +27,31 @@ export default function About() {
   const [quoteText, setQuoteText] = useState('');
   const [authorText, setAuthorText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     setHideNSFWState(getHideNSFW());
+    const savedTheme = getTheme();
+    const isDark = savedTheme === 'dark' || 
+      (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setIsDarkMode(isDark);
   }, []);
 
   const handleToggleNSFW = (checked: boolean) => {
     setHideNSFWState(checked);
     setHideNSFW(checked);
+  };
+
+  const handleToggleTheme = (checked: boolean) => {
+    setIsDarkMode(checked);
+    const newTheme = checked ? 'dark' : 'light';
+    saveTheme(newTheme);
+    
+    if (checked) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleRateApp = () => {
@@ -42,8 +62,21 @@ export default function About() {
     } else if (platform === 'android') {
       window.open(STORE_URLS.android, '_blank');
     } else {
-      // Web fallback - show both options
       alert('Rate us on the App Store or Google Play Store!');
+    }
+  };
+
+  const handleQuoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= QUOTE_MAX_LENGTH) {
+      setQuoteText(value);
+    }
+  };
+
+  const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.length <= AUTHOR_MAX_LENGTH) {
+      setAuthorText(value);
     }
   };
 
@@ -86,6 +119,9 @@ export default function About() {
     }
   };
 
+  const quoteAtLimit = quoteText.length >= QUOTE_MAX_LENGTH;
+  const authorAtLimit = authorText.length >= AUTHOR_MAX_LENGTH;
+
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-background/80">
       <div className="flex flex-1 flex-col items-center px-8 py-8 text-center">
@@ -117,27 +153,45 @@ export default function About() {
               <Label htmlFor="quote-text" className="text-sm text-foreground">
                 Quote
               </Label>
+              {quoteAtLimit && (
+                <p className="text-xs text-destructive mt-1">
+                  Character limit reached ({QUOTE_MAX_LENGTH} characters max)
+                </p>
+              )}
               <Textarea
                 id="quote-text"
                 placeholder="Enter your quote..."
                 value={quoteText}
-                onChange={(e) => setQuoteText(e.target.value)}
+                onChange={handleQuoteChange}
                 className="mt-1 resize-none"
                 rows={3}
+                maxLength={QUOTE_MAX_LENGTH}
               />
+              <p className="text-xs text-muted-foreground mt-1 text-right">
+                {quoteText.length}/{QUOTE_MAX_LENGTH}
+              </p>
             </div>
             
             <div className="text-left">
               <Label htmlFor="author-text" className="text-sm text-foreground">
                 Author <span className="text-muted-foreground">(if unknown, put "anonymous")</span>
               </Label>
+              {authorAtLimit && (
+                <p className="text-xs text-destructive mt-1">
+                  Character limit reached ({AUTHOR_MAX_LENGTH} characters max)
+                </p>
+              )}
               <Input
                 id="author-text"
                 placeholder="Who said it?"
                 value={authorText}
-                onChange={(e) => setAuthorText(e.target.value)}
+                onChange={handleAuthorChange}
                 className="mt-1"
+                maxLength={AUTHOR_MAX_LENGTH}
               />
+              <p className="text-xs text-muted-foreground mt-1 text-right">
+                {authorText.length}/{AUTHOR_MAX_LENGTH}
+              </p>
             </div>
             
             <Button
@@ -161,7 +215,21 @@ export default function About() {
         </div>
 
         {/* Settings */}
-        <div className="mb-6 w-full max-w-sm rounded-lg border border-border bg-card p-4">
+        <div className="mb-6 w-full max-w-sm rounded-lg border border-border bg-card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              <Label htmlFor="dark-mode" className="text-sm text-foreground">
+                Dark mode
+              </Label>
+            </div>
+            <Switch
+              id="dark-mode"
+              checked={isDarkMode}
+              onCheckedChange={handleToggleTheme}
+            />
+          </div>
+          
           <div className="flex items-center justify-between">
             <Label htmlFor="hide-nsfw" className="text-sm text-foreground">
               Hide NSFW quotes
