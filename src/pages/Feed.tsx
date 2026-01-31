@@ -16,8 +16,6 @@ export default function Feed() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [visibleAdKey, setVisibleAdKey] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isScrolling = useRef(false);
-  const lastScrollTime = useRef(0);
   const lastRefreshTime = useRef(0);
 
   // Function to load/refresh quotes
@@ -136,13 +134,9 @@ export default function Feed() {
     }
   }, []);
 
-  // Handle scroll to detect current quote and cycle back to start
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current || isScrolling.current) return;
-    
-    const now = Date.now();
-    if (now - lastScrollTime.current < 100) return;
-    lastScrollTime.current = now;
+  // Handle scroll end to detect current quote (using scrollend for smoother experience)
+  const handleScrollEnd = useCallback(() => {
+    if (!containerRef.current) return;
 
     const container = containerRef.current;
     const scrollTop = container.scrollTop;
@@ -162,9 +156,34 @@ export default function Feed() {
           containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
           setCurrentIndex(0);
         }
-      }, 500);
+      }, 800);
     }
   }, [currentIndex, quotes.length]);
+
+  // Use scrollend event for modern browsers, fallback to debounced scroll
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let scrollTimeout: ReturnType<typeof setTimeout>;
+    
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(handleScrollEnd, 150);
+    };
+
+    // Check if scrollend is supported
+    if ('onscrollend' in window) {
+      container.addEventListener('scrollend', handleScrollEnd);
+      return () => container.removeEventListener('scrollend', handleScrollEnd);
+    } else {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+        clearTimeout(scrollTimeout);
+      };
+    }
+  }, [handleScrollEnd]);
 
   // Build feed items (quotes + ads) with their indices for visibility tracking
   const feedItems = useCallback(() => {
@@ -219,7 +238,6 @@ export default function Feed() {
   return (
     <div 
       ref={containerRef}
-      onScroll={handleScroll}
       className="h-full w-full snap-y snap-mandatory overflow-y-auto"
       style={{ scrollSnapType: 'y mandatory' }}
     >
