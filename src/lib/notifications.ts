@@ -54,9 +54,9 @@ export async function checkNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * Schedule the daily 10 AM notification
+ * Schedule the daily notification at a custom time
  */
-export async function scheduleDailyNotification(): Promise<boolean> {
+export async function scheduleDailyNotification(hour: number = 10, minute: number = 0): Promise<boolean> {
   if (!isNative()) {
     console.log('Cannot schedule notifications on web');
     return false;
@@ -73,14 +73,14 @@ export async function scheduleDailyNotification(): Promise<boolean> {
     // Cancel any existing daily notification first
     await cancelDailyNotification();
 
-    // Calculate next 10 AM
+    // Calculate next scheduled time
     const now = new Date();
-    const next10AM = new Date(now);
-    next10AM.setHours(10, 0, 0, 0);
+    const nextTime = new Date(now);
+    nextTime.setHours(hour, minute, 0, 0);
     
-    // If it's already past 10 AM today, schedule for tomorrow
-    if (now >= next10AM) {
-      next10AM.setDate(next10AM.getDate() + 1);
+    // If it's already past the scheduled time today, schedule for tomorrow
+    if (now >= nextTime) {
+      nextTime.setDate(nextTime.getDate() + 1);
     }
 
     const scheduleOptions: ScheduleOptions = {
@@ -90,7 +90,7 @@ export async function scheduleDailyNotification(): Promise<boolean> {
           title: 'Quote of the Day',
           body: 'Your quote of the day is ready—tap to see it.',
           schedule: {
-            at: next10AM,
+            at: nextTime,
             repeats: true,
             every: 'day',
             allowWhileIdle: true,
@@ -104,7 +104,7 @@ export async function scheduleDailyNotification(): Promise<boolean> {
     };
 
     await LocalNotifications.schedule(scheduleOptions);
-    console.log('Daily notification scheduled for 10 AM');
+    console.log(`Daily notification scheduled for ${hour}:${minute.toString().padStart(2, '0')}`);
     return true;
   } catch (e) {
     console.warn('Failed to schedule daily notification:', e);

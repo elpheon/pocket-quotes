@@ -16,10 +16,10 @@ export default function Privacy() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
         <div className="mx-auto max-w-2xl space-y-6 text-sm text-muted-foreground">
           <p className="text-xs text-muted-foreground/60">
-            Last updated: {new Date().toLocaleDateString()}
+            Last updated: February 2, 2025
           </p>
 
           <section className="space-y-2">
