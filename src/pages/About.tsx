@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff, Grid3X3 } from 'lucide-react';
+import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff, Grid3X3, Bell, BellOff } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme, getShowBackground, setShowBackground as saveShowBackground } from '@/lib/settings';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getHideNSFW, setHideNSFW, getTheme, setTheme as saveTheme, getShowBackground, setShowBackground as saveShowBackground, getNotificationEnabled, setNotificationEnabled, getNotificationTime, setNotificationTime } from '@/lib/settings';
 import { submitQuote } from '@/lib/submitQuote';
 import { toast } from '@/hooks/use-toast';
 import { hapticLight, hapticSuccess } from '@/lib/haptics';
 import { isOnline, onNetworkChange } from '@/lib/network';
+import { scheduleDailyNotification, cancelDailyNotification } from '@/lib/notifications';
 
 const QUOTE_MAX_LENGTH = 300;
 const AUTHOR_MAX_LENGTH = 40;
@@ -25,17 +27,25 @@ const STORE_URLS = {
 };
 
 export default function About() {
-  const [hideNSFW, setHideNSFWState] = useState(false);
+  const [hideNSFW, setHideNSFWState] = useState(true);
   const [quoteText, setQuoteText] = useState('');
   const [authorText, setAuthorText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showBackground, setShowBackgroundState] = useState(true);
   const [networkOnline, setNetworkOnline] = useState(isOnline());
+  const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
+  const [notificationHour, setNotificationHour] = useState(10);
+  const [notificationMinute, setNotificationMinute] = useState(0);
 
   useEffect(() => {
     setHideNSFWState(getHideNSFW());
     setShowBackgroundState(getShowBackground());
+    setNotificationsEnabledState(getNotificationEnabled());
+    const savedTime = getNotificationTime();
+    setNotificationHour(savedTime.hour);
+    setNotificationMinute(savedTime.minute);
+    
     const savedTheme = getTheme();
     const isDark = savedTheme === 'dark' || 
       (savedTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -71,6 +81,49 @@ export default function About() {
     hapticLight();
     // Dispatch custom event for App.tsx to listen to
     window.dispatchEvent(new CustomEvent('backgroundSettingChanged', { detail: checked }));
+  };
+
+  const handleToggleNotifications = async (checked: boolean) => {
+    setNotificationsEnabledState(checked);
+    setNotificationEnabled(checked);
+    hapticLight();
+    
+    if (checked) {
+      const success = await scheduleDailyNotification(notificationHour, notificationMinute);
+      if (success) {
+        toast({
+          title: "Notifications enabled",
+          description: `You'll be reminded daily at ${formatTime(notificationHour, notificationMinute)}`,
+        });
+      }
+    } else {
+      await cancelDailyNotification();
+      toast({
+        title: "Notifications disabled",
+        description: "You won't receive daily quote reminders",
+      });
+    }
+  };
+
+  const handleTimeChange = async (hour: number, minute: number) => {
+    setNotificationHour(hour);
+    setNotificationMinute(minute);
+    setNotificationTime(hour, minute);
+    hapticLight();
+    
+    if (notificationsEnabled) {
+      await scheduleDailyNotification(hour, minute);
+      toast({
+        title: "Notification time updated",
+        description: `You'll be reminded daily at ${formatTime(hour, minute)}`,
+      });
+    }
+  };
+
+  const formatTime = (hour: number, minute: number) => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
   };
 
   const handleRateApp = () => {
@@ -296,7 +349,69 @@ export default function About() {
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* Notification Settings */}
+        <div className="mb-6 w-full max-w-sm rounded-lg border border-border bg-card p-4 space-y-4">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            {notificationsEnabled ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+            Daily Quote Reminder
+          </h2>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="notifications-enabled" className="text-sm text-foreground">
+              Enable daily reminder
+            </Label>
+            <Switch
+              id="notifications-enabled"
+              checked={notificationsEnabled}
+              onCheckedChange={handleToggleNotifications}
+            />
+          </div>
+          
+          {notificationsEnabled && (
+            <div className="space-y-2">
+              <Label className="text-sm text-foreground">Reminder time</Label>
+              <div className="flex gap-2">
+                <Select 
+                  value={notificationHour.toString()} 
+                  onValueChange={(val) => handleTimeChange(parseInt(val), notificationMinute)}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 24 }, (_, i) => {
+                      const period = i >= 12 ? 'PM' : 'AM';
+                      const displayHour = i === 0 ? 12 : i > 12 ? i - 12 : i;
+                      return (
+                        <SelectItem key={i} value={i.toString()}>
+                          {displayHour} {period}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <Select 
+                  value={notificationMinute.toString()} 
+                  onValueChange={(val) => handleTimeChange(notificationHour, parseInt(val))}
+                >
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">:00</SelectItem>
+                    <SelectItem value="15">:15</SelectItem>
+                    <SelectItem value="30">:30</SelectItem>
+                    <SelectItem value="45">:45</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                You'll get a notification to check your Quote of the Day
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col gap-3">
           <Button
             onClick={handleRateApp}
