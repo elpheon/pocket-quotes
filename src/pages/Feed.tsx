@@ -3,10 +3,9 @@ import { Quote, loadQuotes, shuffleQuotes } from '@/lib/quotes';
 import { isFavorite, toggleFavorite, cleanupFavorites } from '@/lib/favorites';
 import { getHideNSFW } from '@/lib/settings';
 import { QuoteCard } from '@/components/QuoteCard';
-import { AdBanner, shouldShowAd } from '@/components/AdBanner';
+import { StickyBannerAd, shouldShowInterstitial, showInterstitial, prepareInterstitial } from '@/components/AdBanner';
 import { Loader2 } from 'lucide-react';
 
-// Refresh quotes every 5 minutes when app is active
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
 export default function Feed() {
@@ -14,55 +13,47 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [visibleAdKey, setVisibleAdKey] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastRefreshTime = useRef(0);
+  const lastInterstitialIndex = useRef(-1);
+
+  // Pre-load first interstitial
+  useEffect(() => {
+    prepareInterstitial();
+  }, []);
 
   // Function to load/refresh quotes
   const refreshQuotes = useCallback(async (isInitialLoad = false) => {
     try {
       const loadedQuotes = await loadQuotes();
-      
-      // Filter NSFW if setting is enabled
       const hideNSFW = getHideNSFW();
       const filteredQuotes = hideNSFW 
         ? loadedQuotes.filter(q => !q.tags?.some(tag => tag.toLowerCase() === 'nsfw'))
         : loadedQuotes;
       
-      // Only shuffle on initial load, not on refresh (to avoid jarring UX)
       if (isInitialLoad) {
-        const shuffled = shuffleQuotes(filteredQuotes);
-        setQuotes(shuffled);
+        setQuotes(shuffleQuotes(filteredQuotes));
       } else {
-        // Merge new quotes while preserving order for existing ones
         setQuotes(prevQuotes => {
           const existingIds = new Set(prevQuotes.map(q => q.id));
           const newQuotes = filteredQuotes.filter(q => !existingIds.has(q.id));
           if (newQuotes.length > 0) {
-            // Add new quotes to the end
             return [...prevQuotes, ...shuffleQuotes(newQuotes)];
           }
           return prevQuotes;
         });
       }
       
-      // Clean up favorites for quotes that no longer exist
       cleanupFavorites(new Set(loadedQuotes.map(q => q.id)));
-      
-      // Initialize/update favorites state
       const favIds = new Set<string>();
-      loadedQuotes.forEach(q => {
-        if (isFavorite(q.id)) favIds.add(q.id);
-      });
+      loadedQuotes.forEach(q => { if (isFavorite(q.id)) favIds.add(q.id); });
       setFavorites(favIds);
-      
       lastRefreshTime.current = Date.now();
     } catch (e) {
       console.error('Failed to load quotes:', e);
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     async function init() {
       await refreshQuotes(true);
@@ -71,86 +62,61 @@ export default function Feed() {
     init();
   }, [refreshQuotes]);
 
-  // Auto-refresh on visibility change (when app comes to foreground) and periodic refresh
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const timeSinceLastRefresh = Date.now() - lastRefreshTime.current;
-        // Refresh if it's been more than 1 minute since last refresh
-        if (timeSinceLastRefresh > 60000) {
-          refreshQuotes(false);
-        }
-      }
-    };
-
-    // Set up visibility change listener (for when app comes back to foreground)
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Set up periodic refresh
-    const intervalId = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && Date.now() - lastRefreshTime.current > 60000) {
         refreshQuotes(false);
       }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') refreshQuotes(false);
     }, REFRESH_INTERVAL);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(intervalId);
     };
   }, [refreshQuotes]);
 
-  // Handle favorite toggle
   const handleToggleFavorite = useCallback((quoteId: string) => {
     const newState = toggleFavorite(quoteId);
     setFavorites(prev => {
       const next = new Set(prev);
-      if (newState) {
-        next.add(quoteId);
-      } else {
-        next.delete(quoteId);
-      }
+      newState ? next.add(quoteId) : next.delete(quoteId);
       return next;
     });
   }, []);
 
-  // Handle share
   const handleShare = useCallback((quote: Quote) => {
-    const text = quote.author 
-      ? `"${quote.text}" — ${quote.author}`
-      : `"${quote.text}"`;
-    
+    const text = quote.author ? `"${quote.text}" — ${quote.author}` : `"${quote.text}"`;
     if (navigator.share) {
-      navigator.share({
-        title: 'Out of Pocket',
-        text: text,
-      }).catch(() => {
-        // User cancelled or share failed
-      });
+      navigator.share({ title: 'Out of Pocket', text }).catch(() => {});
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(text).then(() => {
-        // Could show a toast here
-      });
+      navigator.clipboard.writeText(text).then(() => {});
     }
   }, []);
 
-  // Handle scroll end to detect current quote (using scrollend for smoother experience)
+  // Scroll end detection
   const handleScrollEnd = useCallback(() => {
     if (!containerRef.current) return;
-
     const container = containerRef.current;
     const scrollTop = container.scrollTop;
     const itemHeight = container.clientHeight;
     const newIndex = Math.round(scrollTop / itemHeight);
-    
+
     if (newIndex !== currentIndex && newIndex >= 0) {
       setCurrentIndex(newIndex);
+
+      // Show interstitial every 4th quote
+      if (shouldShowInterstitial(newIndex) && newIndex !== lastInterstitialIndex.current) {
+        lastInterstitialIndex.current = newIndex;
+        showInterstitial();
+      }
     }
 
-    // Check if we've reached near the end and cycle back
+    // Cycle back when reaching the end
     const maxScroll = container.scrollHeight - container.clientHeight;
     if (scrollTop >= maxScroll - 10 && quotes.length > 0) {
-      // Scroll back to the beginning after a brief moment
       setTimeout(() => {
         if (containerRef.current) {
           containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -160,59 +126,22 @@ export default function Feed() {
     }
   }, [currentIndex, quotes.length]);
 
-  // Use scrollend event for modern browsers, fallback to debounced scroll
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
     let scrollTimeout: ReturnType<typeof setTimeout>;
-    
     const handleScroll = () => {
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(handleScrollEnd, 150);
     };
-
-    // Check if scrollend is supported
     if ('onscrollend' in window) {
       container.addEventListener('scrollend', handleScrollEnd);
       return () => container.removeEventListener('scrollend', handleScrollEnd);
     } else {
       container.addEventListener('scroll', handleScroll, { passive: true });
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        clearTimeout(scrollTimeout);
-      };
+      return () => { container.removeEventListener('scroll', handleScroll); clearTimeout(scrollTimeout); };
     }
   }, [handleScrollEnd]);
-
-  // Build feed items (quotes + ads) with their indices for visibility tracking
-  const feedItems = useCallback(() => {
-    const items: { type: 'quote' | 'ad'; quote?: Quote; key: string; feedIndex: number }[] = [];
-    let adCount = 0;
-    let feedIndex = 0;
-    
-    quotes.forEach((quote, index) => {
-      items.push({ type: 'quote', quote, key: `quote-${quote.id}`, feedIndex: feedIndex++ });
-      
-      // Insert ad after every 4th quote
-      if (shouldShowAd(index)) {
-        items.push({ type: 'ad', key: `ad-${adCount++}`, feedIndex: feedIndex++ });
-      }
-    });
-    
-    return items;
-  }, [quotes]);
-
-  // Update visible ad based on current scroll position
-  useEffect(() => {
-    const items = feedItems();
-    const currentItem = items[currentIndex];
-    if (currentItem?.type === 'ad') {
-      setVisibleAdKey(currentItem.key);
-    } else {
-      setVisibleAdKey(null);
-    }
-  }, [currentIndex, feedItems]);
 
   if (loading) {
     return (
@@ -233,32 +162,32 @@ export default function Feed() {
     );
   }
 
-  const items = feedItems();
-
   return (
-    <div 
-      ref={containerRef}
-      className="h-full w-full snap-y snap-mandatory overflow-y-auto"
-      style={{ scrollSnapType: 'y mandatory' }}
-    >
-      {items.map((item) => (
-        <div
-          key={item.key}
-          className="flex h-full w-full shrink-0 snap-start snap-always"
-          style={{ height: '100%' }}
-        >
-          {item.type === 'quote' && item.quote ? (
+    <div className="flex h-full w-full flex-col">
+      {/* Sticky banner ad at top */}
+      <StickyBannerAd />
+      
+      {/* Scrollable quote feed */}
+      <div 
+        ref={containerRef}
+        className="flex-1 snap-y snap-mandatory overflow-y-auto"
+        style={{ scrollSnapType: 'y mandatory' }}
+      >
+        {quotes.map((quote) => (
+          <div
+            key={quote.id}
+            className="flex w-full shrink-0 snap-start snap-always"
+            style={{ height: '100%' }}
+          >
             <QuoteCard
-              quote={item.quote}
-              isFavorite={favorites.has(item.quote.id)}
-              onToggleFavorite={() => handleToggleFavorite(item.quote!.id)}
-              onShare={() => handleShare(item.quote!)}
+              quote={quote}
+              isFavorite={favorites.has(quote.id)}
+              onToggleFavorite={() => handleToggleFavorite(quote.id)}
+              onShare={() => handleShare(quote)}
             />
-          ) : (
-            <AdBanner isVisible={visibleAdKey === item.key} />
-          )}
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
