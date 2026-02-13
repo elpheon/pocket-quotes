@@ -166,9 +166,20 @@ export async function showInterstitial(): Promise<void> {
 }
 
 /**
- * Check if an interstitial should be shown at this quote index.
- * Triggers every 4th quote (indices 3, 7, 11, …).
+ * Tracks when to show the next interstitial (every 6-9 quotes, randomized).
  */
-export function shouldShowInterstitial(quoteIndex: number): boolean {
-  return (quoteIndex + 1) % 4 === 0;
+let nextInterstitialAt = randomBetween(6, 9);
+let quotesSinceLastInterstitial = 0;
+
+function randomBetween(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function checkAndShowInterstitial(): void {
+  quotesSinceLastInterstitial++;
+  if (quotesSinceLastInterstitial >= nextInterstitialAt) {
+    quotesSinceLastInterstitial = 0;
+    nextInterstitialAt = randomBetween(6, 9);
+    showInterstitial();
+  }
 }

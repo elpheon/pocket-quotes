@@ -3,7 +3,7 @@ import { Quote, loadQuotes, shuffleQuotes } from '@/lib/quotes';
 import { isFavorite, toggleFavorite, cleanupFavorites } from '@/lib/favorites';
 import { getHideNSFW } from '@/lib/settings';
 import { QuoteCard } from '@/components/QuoteCard';
-import { StickyBannerAd, shouldShowInterstitial, showInterstitial, prepareInterstitial } from '@/components/AdBanner';
+import { StickyBannerAd, checkAndShowInterstitial, prepareInterstitial } from '@/components/AdBanner';
 import { Loader2 } from 'lucide-react';
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -15,7 +15,6 @@ export default function Feed() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const lastRefreshTime = useRef(0);
-  const lastInterstitialIndex = useRef(-1);
 
   // Pre-load first interstitial
   useEffect(() => {
@@ -106,12 +105,7 @@ export default function Feed() {
 
     if (newIndex !== currentIndex && newIndex >= 0) {
       setCurrentIndex(newIndex);
-
-      // Show interstitial every 4th quote
-      if (shouldShowInterstitial(newIndex) && newIndex !== lastInterstitialIndex.current) {
-        lastInterstitialIndex.current = newIndex;
-        showInterstitial();
-      }
+      checkAndShowInterstitial();
     }
 
     // Cycle back when reaching the end
