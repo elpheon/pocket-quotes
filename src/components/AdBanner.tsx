@@ -42,10 +42,18 @@ const BANNER_REFRESH_MS = 30_000;
 let admobInitialized = false;
 let admobInitializing = false;
 
+async function isAdMobAvailable(): Promise<boolean> {
+  try {
+    // Check if the plugin is actually registered on the native side
+    return typeof AdMob !== 'undefined' && AdMob !== null && typeof AdMob.initialize === 'function';
+  } catch {
+    return false;
+  }
+}
+
 async function ensureAdMobInit(): Promise<boolean> {
   if (admobInitialized) return true;
   if (admobInitializing) {
-    // Wait for in-progress init
     return new Promise((resolve) => {
       const check = setInterval(() => {
         if (admobInitialized) { clearInterval(check); resolve(true); }
@@ -55,6 +63,11 @@ async function ensureAdMobInit(): Promise<boolean> {
   }
   admobInitializing = true;
   try {
+    const available = await isAdMobAvailable();
+    if (!available) {
+      console.warn('AdMob plugin not available on this platform');
+      return false;
+    }
     await AdMob.initialize({ initializeForTesting: INITIALIZE_FOR_TESTING });
     admobInitialized = true;
     return true;
@@ -80,6 +93,8 @@ export function StickyBannerAd({ className }: BannerAdProps) {
 
   const showBanner = useCallback(async () => {
     try {
+      const available = await isAdMobAvailable();
+      if (!available) return;
       await AdMob.removeBanner().catch(() => {});
       await new Promise(r => setTimeout(r, 50));
       const adId = platform === 'ios' ? AD_UNIT_IDS.banner.ios : AD_UNIT_IDS.banner.android;
@@ -103,7 +118,6 @@ export function StickyBannerAd({ className }: BannerAdProps) {
       const ready = await ensureAdMobInit();
       if (!ready || !mounted) return;
       await showBanner();
-      // Auto-refresh every 30 seconds
       refreshTimer.current = setInterval(showBanner, BANNER_REFRESH_MS);
     })();
 
@@ -140,6 +154,8 @@ export async function prepareInterstitial(): Promise<void> {
   if (!ready) return;
 
   try {
+    const available = await isAdMobAvailable();
+    if (!available) return;
     const adId = platform === 'ios' ? AD_UNIT_IDS.interstitial.ios : AD_UNIT_IDS.interstitial.android;
     const options: AdOptions = { adId };
     await AdMob.prepareInterstitial(options);
@@ -154,16 +170,17 @@ export async function showInterstitial(): Promise<void> {
   if (!interstitialLoaded) {
     await prepareInterstitial();
   }
+  if (!interstitialLoaded) return;
   try {
     await AdMob.showInterstitial();
     interstitialLoaded = false;
-    // Pre-load next one
     prepareInterstitial();
   } catch (e) {
     console.error('Interstitial show error:', e);
     interstitialLoaded = false;
   }
 }
+
 
 /**
  * Tracks when to show the next interstitial (every 6-9 quotes, randomized).
