@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff, Grid3X3, Bell, BellOff } from 'lucide-react';
+import { Star, Shield, ExternalLink, Send, Loader2, Sun, Moon, WifiOff, Grid3X3, Bell, BellOff, Mail } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -431,6 +431,19 @@ export default function About() {
             <Link to="/privacy">
               <Shield className="h-4 w-4" />
               Privacy Policy
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-muted-foreground"
+            asChild
+          >
+            <Link to="/support">
+              <Mail className="h-4 w-4" />
+              Support
               <ExternalLink className="h-3 w-3" />
             </Link>
           </Button>

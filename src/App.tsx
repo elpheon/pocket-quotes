@@ -13,6 +13,7 @@ import Feed from "./pages/Feed";
 import Saved from "./pages/Saved";
 import About from "./pages/About";
 import Privacy from "./pages/Privacy";
+import Support from "./pages/Support";
 import QuoteOfTheDay from "./pages/QuoteOfTheDay";
 import NotFound from "./pages/NotFound";
 
@@ -72,6 +73,7 @@ function AppContent() {
           <Route path="/saved" element={<Saved />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/support" element={<Support />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
