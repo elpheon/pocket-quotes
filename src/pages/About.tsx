@@ -434,6 +434,19 @@ export default function About() {
               <ExternalLink className="h-3 w-3" />
             </Link>
           </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-muted-foreground"
+            asChild
+          >
+            <Link to="/support">
+              <Mail className="h-4 w-4" />
+              Support
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </Button>
         </div>
       </div>
 
