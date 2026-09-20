@@ -3,7 +3,7 @@ import { Quote, loadQuotes, shuffleQuotes } from '@/lib/quotes';
 import { isFavorite, toggleFavorite, cleanupFavorites } from '@/lib/favorites';
 import { getHideNSFW } from '@/lib/settings';
 import { QuoteCard } from '@/components/QuoteCard';
-import { StickyBannerAd, checkAndShowInterstitial, prepareInterstitial } from '@/components/AdBanner';
+import { StickyBannerAd, checkAndShowInterstitial, initAds } from '@/components/AdBanner';
 import { Loader2 } from 'lucide-react';
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -16,9 +16,9 @@ export default function Feed() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastRefreshTime = useRef(0);
 
-  // Pre-load first interstitial
+  // Run SDK init + UMP consent, then warm the first interstitial
   useEffect(() => {
-    prepareInterstitial();
+    void initAds();
   }, []);
 
   // Function to load/refresh quotes

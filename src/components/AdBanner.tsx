@@ -1,202 +1,142 @@
 /**
- * GOOGLE ADMOB INTEGRATION
- * 
- * Banner Ad: Persistent banner at top of feed, refreshes every 30 seconds.
- * Interstitial Ad: Full-screen ad shown every 4th quote.
- * 
- * ============================================================
- * SETUP REQUIRED FOR PRODUCTION:
- * ============================================================
- * 
- * 1. Create an AdMob account at https://admob.google.com
- * 2. Register your apps and get Ad Unit IDs for Banner + Interstitial
- * 3. Replace the AD_UNIT_IDS below with your production IDs
- * 4. Set INITIALIZE_FOR_TESTING to false
- * 
- * See capacitor.config.ts comments for native manifest setup.
- * ============================================================
+ * GOOGLE ADMOB PLACEMENT
+ *
+ * Banner: adaptive banner pinned to the top of the feed.
+ * Interstitial: full-screen, every 6–9 quotes and no more than once every
+ * two minutes.
+ *
+ * The SDK, UMP consent flow and load/show lifecycle live in `@/lib/admob`.
+ * This file only decides *when* an ad is allowed to appear.
+ *
+ * Ad unit IDs come from the environment (see `.env.example`), so switching
+ * between Google's test inventory and the live units is a config change, not
+ * a code change.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
-import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, AdOptions } from '@capacitor-community/admob';
-import { Capacitor } from '@capacitor/core';
+import { useEffect, useState } from 'react';
+import {
+  adsSupported,
+  bannerHeightPx,
+  initAdMob,
+  isFullScreenAdShowing,
+  isInterstitialReady,
+  onAdEvent,
+  prepareInterstitial,
+  removeBanner,
+  showBanner,
+  showInterstitial,
+} from '@/lib/admob';
+
+export { prepareInterstitial } from '@/lib/admob';
+
+/**
+ * Fallback height reserved for the banner until the SDK reports the real one.
+ * An adaptive banner's height varies by device, so the reported value wins.
+ */
+const FALLBACK_BANNER_HEIGHT_PX = 50;
 
 // ============================================================
-// PRODUCTION: Replace these with your real AdMob Ad Unit IDs
+// Banner Ad — adaptive banner at the top of the feed
 // ============================================================
-const AD_UNIT_IDS = {
-  banner: {
-    android: 'ca-app-pub-3940256099942544/6300978111', // TEST
-    ios: 'ca-app-pub-3940256099942544/2934735716',     // TEST
-  },
-  interstitial: {
-    android: 'ca-app-pub-3940256099942544/1033173712', // TEST
-    ios: 'ca-app-pub-3940256099942544/4411468910',     // TEST
-  },
-};
 
-const INITIALIZE_FOR_TESTING = true;
-const BANNER_REFRESH_MS = 30_000;
-
-// Singleton initialization
-let admobInitialized = false;
-let admobInitializing = false;
-
-async function isAdMobAvailable(): Promise<boolean> {
-  try {
-    // Check if the plugin is actually registered on the native side
-    return typeof AdMob !== 'undefined' && AdMob !== null && typeof AdMob.initialize === 'function';
-  } catch {
-    return false;
-  }
-}
-
-async function ensureAdMobInit(): Promise<boolean> {
-  if (admobInitialized) return true;
-  if (admobInitializing) {
-    return new Promise((resolve) => {
-      const check = setInterval(() => {
-        if (admobInitialized) { clearInterval(check); resolve(true); }
-      }, 100);
-      setTimeout(() => { clearInterval(check); resolve(false); }, 5000);
-    });
-  }
-  admobInitializing = true;
-  try {
-    const available = await isAdMobAvailable();
-    if (!available) {
-      console.warn('AdMob plugin not available on this platform');
-      return false;
-    }
-    await AdMob.initialize({ initializeForTesting: INITIALIZE_FOR_TESTING });
-    admobInitialized = true;
-    return true;
-  } catch (e) {
-    console.error('AdMob init error:', e);
-    return false;
-  } finally {
-    admobInitializing = false;
-  }
-}
-
-// ============================================================
-// Banner Ad Component – sticky at top, auto-refreshes
-// ============================================================
 interface BannerAdProps {
   className?: string;
 }
 
 export function StickyBannerAd({ className }: BannerAdProps) {
-  const refreshTimer = useRef<ReturnType<typeof setInterval>>();
-  const platform = Capacitor.getPlatform();
-  const isNative = platform === 'ios' || platform === 'android';
-
-  const showBanner = useCallback(async () => {
-    try {
-      const available = await isAdMobAvailable();
-      if (!available) return;
-      await AdMob.removeBanner().catch(() => {});
-      await new Promise(r => setTimeout(r, 50));
-      const adId = platform === 'ios' ? AD_UNIT_IDS.banner.ios : AD_UNIT_IDS.banner.android;
-      const options: BannerAdOptions = {
-        adId,
-        adSize: BannerAdSize.BANNER,
-        position: BannerAdPosition.TOP_CENTER,
-        margin: 0,
-      };
-      await AdMob.showBanner(options);
-    } catch (e) {
-      console.error('Banner ad error:', e);
-    }
-  }, [platform]);
+  const supported = adsSupported();
+  const [height, setHeight] = useState(0);
 
   useEffect(() => {
-    if (!isNative) return;
+    if (!supported) return;
 
-    let mounted = true;
-    (async () => {
-      const ready = await ensureAdMobInit();
-      if (!ready || !mounted) return;
-      await showBanner();
-      refreshTimer.current = setInterval(showBanner, BANNER_REFRESH_MS);
-    })();
+    // Space is reserved only once the SDK confirms a banner rendered — a
+    // no-fill or a declined consent then leaves no dead strip at the top.
+    const unsubscribe = onAdEvent((event) => {
+      if (event === 'banner-loaded') {
+        setHeight(bannerHeightPx() ?? FALLBACK_BANNER_HEIGHT_PX);
+      } else if (event === 'banner-failed') {
+        setHeight(0);
+      }
+    });
+
+    void showBanner();
 
     return () => {
-      mounted = false;
-      if (refreshTimer.current) clearInterval(refreshTimer.current);
-      AdMob.removeBanner().catch(() => {});
+      unsubscribe();
+      void removeBanner();
     };
-  }, [isNative, showBanner]);
+  }, [supported]);
 
-  // Web placeholder
-  if (!isNative) {
-    return (
-      <div className={`flex w-full items-center justify-center bg-card border-b border-border py-2 ${className ?? ''}`}>
-        <p className="text-xs text-muted-foreground">📢 Banner Ad (native only)</p>
-      </div>
-    );
-  }
+  // Web / any build without ad units configured: render nothing at all, so the
+  // feed does not carry a dead placeholder strip.
+  if (!supported) return null;
 
-  // Native: AdMob renders as an overlay at TOP_CENTER; reserve space
-  return <div className={`w-full h-[50px] shrink-0 ${className ?? ''}`} />;
+  // Native: AdMob renders as an overlay at TOP_CENTER, so all this element
+  // does is reserve the space. It stays collapsed until a banner is actually
+  // showing — a user who declined consent gets no empty gap.
+  return <div className={`w-full shrink-0 ${className ?? ''}`} style={{ height }} aria-hidden />;
 }
 
 // ============================================================
-// Interstitial Ad – preload + show on demand
+// Interstitial pacing
 // ============================================================
-let interstitialLoaded = false;
 
-export async function prepareInterstitial(): Promise<void> {
-  const platform = Capacitor.getPlatform();
-  if (platform !== 'ios' && platform !== 'android') return;
-  
-  const ready = await ensureAdMobInit();
-  if (!ready) return;
-
-  try {
-    const available = await isAdMobAvailable();
-    if (!available) return;
-    const adId = platform === 'ios' ? AD_UNIT_IDS.interstitial.ios : AD_UNIT_IDS.interstitial.android;
-    const options: AdOptions = { adId };
-    await AdMob.prepareInterstitial(options);
-    interstitialLoaded = true;
-  } catch (e) {
-    console.error('Interstitial prepare error:', e);
-    interstitialLoaded = false;
-  }
-}
-
-export async function showInterstitial(): Promise<void> {
-  if (!interstitialLoaded) {
-    await prepareInterstitial();
-  }
-  if (!interstitialLoaded) return;
-  try {
-    await AdMob.showInterstitial();
-    interstitialLoaded = false;
-    prepareInterstitial();
-  } catch (e) {
-    console.error('Interstitial show error:', e);
-    interstitialLoaded = false;
-  }
-}
-
-
-/**
- * Tracks when to show the next interstitial (every 6-9 quotes, randomized).
- */
-let nextInterstitialAt = randomBetween(6, 9);
-let quotesSinceLastInterstitial = 0;
+/** Minimum wall-clock gap between two interstitials. */
+const MIN_INTERSTITIAL_GAP_MS = 2 * 60 * 1000;
+/** Quotes the user must scroll past before the first interstitial of a run. */
+const MIN_QUOTES_BETWEEN = 6;
+const MAX_QUOTES_BETWEEN = 9;
 
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+let nextInterstitialAt = randomBetween(MIN_QUOTES_BETWEEN, MAX_QUOTES_BETWEEN);
+let quotesSinceLastInterstitial = 0;
+let lastInterstitialShownAt = 0;
+
+// As soon as an interstitial is dismissed, queue up the next one so it is
+// warm by the time the counter comes round again.
+onAdEvent((event) => {
+  if (event === 'interstitial-dismissed') void prepareInterstitial();
+});
+
+/**
+ * Called once per quote the user scrolls past. Shows an interstitial when both
+ * the quote counter and the time gap allow it, and there is a loaded ad to
+ * show. The counter only resets on an ad that was genuinely displayed, so a
+ * "No Fill" response does not silently cost the user a placement.
+ */
 export function checkAndShowInterstitial(): void {
+  if (!adsSupported()) return;
+
   quotesSinceLastInterstitial++;
-  if (quotesSinceLastInterstitial >= nextInterstitialAt) {
-    quotesSinceLastInterstitial = 0;
-    nextInterstitialAt = randomBetween(6, 9);
-    showInterstitial();
+  if (quotesSinceLastInterstitial < nextInterstitialAt) return;
+  if (isFullScreenAdShowing()) return;
+  if (Date.now() - lastInterstitialShownAt < MIN_INTERSTITIAL_GAP_MS) return;
+
+  if (!isInterstitialReady()) {
+    // Nothing loaded yet — request one for next time rather than dropping the
+    // placement entirely.
+    void prepareInterstitial();
+    return;
   }
+
+  void (async () => {
+    const shown = await showInterstitial();
+    if (!shown) return;
+    lastInterstitialShownAt = Date.now();
+    quotesSinceLastInterstitial = 0;
+    nextInterstitialAt = randomBetween(MIN_QUOTES_BETWEEN, MAX_QUOTES_BETWEEN);
+  })();
+}
+
+/**
+ * Runs the SDK init + UMP consent flow and warms the first interstitial.
+ * Safe to call from anywhere; it no-ops off-device and de-duplicates itself.
+ */
+export async function initAds(): Promise<void> {
+  const canRequestAds = await initAdMob();
+  if (canRequestAds) void prepareInterstitial();
 }
