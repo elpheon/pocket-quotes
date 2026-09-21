@@ -9,7 +9,7 @@ export default function Support() {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Button variant="ghost" size="icon" asChild>
           <Link to="/about">
             <ArrowLeft className="h-5 w-5" />

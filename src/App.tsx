@@ -4,9 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BootSplash } from "@/components/BootSplash";
 import { BottomNav } from "@/components/BottomNav";
 import { GeometricBackground } from "@/components/GeometricBackground";
 import { initializeNotifications } from "@/lib/notifications";
+import { registerPush } from "@/lib/push";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { getTheme, getShowBackground } from "@/lib/settings";
 import Feed from "./pages/Feed";
@@ -45,6 +47,11 @@ function AppContent() {
     initializeNotifications((route) => {
       navigate(route);
     });
+
+    // Register for remote push. iOS treats local and remote notifications as
+    // one permission, so this reuses the prompt initializeNotifications has
+    // already shown rather than raising a second one.
+    void registerPush();
 
     // Listen for background setting changes
     const handleBackgroundChange = (e: CustomEvent<boolean>) => {
@@ -89,6 +96,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <BootSplash />
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>

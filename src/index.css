@@ -190,3 +190,86 @@ All colors MUST be HSL.
     transform: translate(-10px, -5px) scale(1.01);
   }
 }
+/* ---------------------------------------------------------------
+   FuturisticLoader
+   Counter-rotating diamonds + orbiting sweep. Kept here rather than
+   in tailwind.config so the reduced-motion override can switch the
+   whole mark off in one place.
+   --------------------------------------------------------------- */
+
+@keyframes loader-spin {
+  from {
+    transform: rotate(45deg);
+  }
+  to {
+    transform: rotate(405deg);
+  }
+}
+
+@keyframes loader-spin-reverse {
+  from {
+    transform: rotate(405deg);
+  }
+  to {
+    transform: rotate(45deg);
+  }
+}
+
+@keyframes loader-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.72);
+  }
+}
+
+.loader-spin-slow {
+  animation: loader-spin 6s linear infinite;
+}
+
+.loader-spin-reverse {
+  animation: loader-spin-reverse 4s linear infinite;
+}
+
+.loader-spin-fast {
+  animation: loader-spin 2.4s linear infinite;
+}
+
+.loader-sweep {
+  animation: loader-orbit 1.6s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+.loader-pulse {
+  animation: loader-pulse 1.6s ease-in-out infinite;
+  transform-origin: 50px 50px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-mark * {
+    animation: none !important;
+  }
+  /* Without motion the diamonds must still be offset from each other,
+     otherwise they stack into a single square. */
+  .loader-spin-slow,
+  .loader-spin-fast {
+    transform: rotate(45deg);
+    transform-origin: 50px 50px;
+  }
+  .loader-spin-reverse {
+    transform: rotate(22.5deg);
+    transform-origin: 50px 50px;
+  }
+}

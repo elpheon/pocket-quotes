@@ -1,67 +1,44 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * CAPACITOR CONFIGURATION
- * 
- * This file configures your native iOS and Android apps.
- * 
- * SETUP STEPS:
- * 1. Export this project to GitHub (use the "Export to GitHub" button)
- * 2. Clone the repo locally: git clone YOUR_REPO_URL
- * 3. Install dependencies: npm install
- * 4. Add platforms: npx cap add ios && npx cap add android
- * 5. Build the web app: npm run build
- * 6. Sync to native: npx cap sync
- * 7. Open in IDE: npx cap open ios (or android)
- * 
- * ============================================================
- * PRODUCTION CHECKLIST (before submitting to app stores):
- * ============================================================
- * 1. Change appId to your own bundle identifier (e.g., com.yourcompany.outofpocket)
- * 2. Comment out or remove the entire "server" block below
- * 3. Update AdMob IDs in src/components/AdBanner.tsx
- * 4. Update store URLs in src/pages/About.tsx
- * 5. Run: npm run build && npx cap sync
+ * CAPACITOR CONFIGURATION — production.
+ *
+ * The web assets are bundled into the app (webDir: 'dist'); there is no
+ * `server` block, so the app does not load a remote URL. That is deliberate:
+ * a shipped app pointing at a hosted URL is both an Apple 4.2 rejection risk
+ * and a blank screen the moment the host is unreachable.
+ *
+ * Build cycle after any web change:
+ *   npm run build && npx cap sync
+ *   npx cap open ios      # or: npx cap open android
  */
-
 const config: CapacitorConfig = {
-  // ============================================================
-  // PRODUCTION: Change this to your own bundle identifier
-  // Example: 'com.yourcompany.outofpocket'
-  // ============================================================
-  appId: 'app.lovable.2febe13a9bf84f51beecaf74f2784c1f',
-  appName: 'Out of Pocket',
+  // iOS bundle identifier. Android deliberately differs — its applicationId
+  // is com.nathan.pocketquotes (android/app/build.gradle), because the two
+  // Firebase apps were registered under different ids. This field is only
+  // read by `cap add`, so the native projects are the source of truth.
+  appId: 'com.outtapocket.app',
+  appName: 'Outta Pocket',
   webDir: 'dist',
-  
-  // ============================================================
-  // DEVELOPMENT SERVER - REMOVE FOR PRODUCTION
-  // Comment out or delete this entire "server" block before building
-  // your production app for the app stores.
-  // ============================================================
-  server: {
-    url: 'https://2febe13a-9bf8-4f51-beec-af74f2784c1f.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
-  // ============================================================
-  // END DEVELOPMENT SERVER
-  // ============================================================
-  
-  // iOS-specific settings
   ios: {
     contentInset: 'automatic',
   },
-  
-  // Android-specific settings  
+
   android: {
-    allowMixedContent: true,
+    allowMixedContent: false,
   },
 
-  // Splash screen configuration
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
-      launchAutoHide: true,
-      backgroundColor: '#000000',
+      // The web layer dismisses the splash itself (see BootSplash.tsx) so the
+      // static native image hands over to the animated loader with no white
+      // flash in between. launchShowDuration is the safety net if the web
+      // layer never boots at all.
+      launchShowDuration: 3000,
+      launchAutoHide: false,
+      // Matches the app's dark --background (hsl 222 47% 11%) so the splash
+      // does not flash a different colour against the app chrome.
+      backgroundColor: '#0d1220',
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,

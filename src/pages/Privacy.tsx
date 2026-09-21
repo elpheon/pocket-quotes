@@ -6,7 +6,7 @@ export default function Privacy() {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <Button variant="ghost" size="icon" asChild>
           <Link to="/about">
             <ArrowLeft className="h-5 w-5" />
@@ -25,7 +25,7 @@ export default function Privacy() {
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">Overview</h2>
             <p>
-              Out of Pocket ("we", "our", or "the app") is committed to protecting your privacy. 
+              Outta Pocket ("we", "our", or "the app") is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, and safeguard your information 
               when you use our mobile application.
             </p>

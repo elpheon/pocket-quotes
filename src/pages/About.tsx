@@ -18,13 +18,19 @@ import { scheduleDailyNotification, cancelDailyNotification } from '@/lib/notifi
 const QUOTE_MAX_LENGTH = 300;
 const AUTHOR_MAX_LENGTH = 40;
 
-// ============================================================
-// PRODUCTION: Replace these with your actual App Store URLs
-// ============================================================
-const STORE_URLS = {
-  ios: 'https://apps.apple.com/app/id000000000',
-  android: 'https://play.google.com/store/apps/details?id=com.yourcompany.outofpocket',
+// Store listing URLs, set once the app records exist. They live in the
+// environment (see .env.example) rather than in code so that shipping the real
+// links is a config change. Until they are set, the "Rate this app" button is
+// hidden — a rate button pointing at a placeholder listing is worse than no
+// button, and App Store review treats dead links as broken functionality.
+const STORE_URLS: Record<string, string | undefined> = {
+  ios: import.meta.env.VITE_APP_STORE_URL as string | undefined,
+  android: import.meta.env.VITE_PLAY_STORE_URL as string | undefined,
 };
+
+function storeUrlForPlatform(): string | undefined {
+  return STORE_URLS[Capacitor.getPlatform()] || undefined;
+}
 
 export default function About() {
   const [hideNSFW, setHideNSFWState] = useState(true);
@@ -126,16 +132,10 @@ export default function About() {
     return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
   };
 
+  const storeUrl = storeUrlForPlatform();
+
   const handleRateApp = () => {
-    const platform = Capacitor.getPlatform();
-    
-    if (platform === 'ios') {
-      window.open(STORE_URLS.ios, '_blank');
-    } else if (platform === 'android') {
-      window.open(STORE_URLS.android, '_blank');
-    } else {
-      alert('Rate us on the App Store or Google Play Store!');
-    }
+    if (storeUrl) window.open(storeUrl, '_blank');
   };
 
   const handleQuoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -207,7 +207,7 @@ export default function About() {
 
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-background/80">
-      <div className="flex flex-1 flex-col items-center px-8 py-8 text-center">
+      <div className="flex flex-1 flex-col items-center px-8 py-8 pt-[max(2rem,env(safe-area-inset-top))] text-center">
         {/* Logo/Title */}
         <div className="mb-6">
           <h1 className="mb-2 text-4xl font-bold text-foreground">
@@ -413,14 +413,12 @@ export default function About() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Button
-            onClick={handleRateApp}
-            variant="secondary"
-            className="gap-2"
-          >
-            <Star className="h-5 w-5" />
-            Rate this app
-          </Button>
+          {storeUrl && (
+            <Button onClick={handleRateApp} variant="secondary" className="gap-2">
+              <Star className="h-5 w-5" />
+              Rate this app
+            </Button>
+          )}
 
           <Button
             variant="ghost"
