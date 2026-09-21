@@ -25,7 +25,7 @@ export default function Privacy() {
           <section className="space-y-2">
             <h2 className="text-base font-semibold text-foreground">Overview</h2>
             <p>
-              Out of Pocket ("we", "our", or "the app") is committed to protecting your privacy. 
+              Outta Pocket ("we", "our", or "the app") is committed to protecting your privacy. 
               This Privacy Policy explains how we collect, use, and safeguard your information 
               when you use our mobile application.
             </p>

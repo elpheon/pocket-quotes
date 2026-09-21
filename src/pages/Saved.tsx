@@ -44,7 +44,7 @@ export default function Saved() {
     
     if (navigator.share) {
       navigator.share({
-        title: 'Out of Pocket',
+        title: 'Outta Pocket',
         text: text,
       }).catch(() => {});
     } else {

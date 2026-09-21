@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "327857919934",
+    "project_id": "outtapocket-31fd3",
+    "storage_bucket": "outtapocket-31fd3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:327857919934:android:907cc5b1de3475fa3d0bef",
+        "android_client_info": {
+          "package_name": "com.nathan.pocketquotes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4mW6BwFZwBa3nPJes_Op7874Zw5QX5WU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

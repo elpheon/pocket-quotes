@@ -93,7 +93,7 @@ export default function Feed() {
   const handleShare = useCallback((quote: Quote) => {
     const text = quote.author ? `"${quote.text}" — ${quote.author}` : `"${quote.text}"`;
     if (navigator.share) {
-      navigator.share({ title: 'Out of Pocket', text }).catch(() => {});
+      navigator.share({ title: 'Outta Pocket', text }).catch(() => {});
     } else {
       navigator.clipboard.writeText(text).then(() => {});
     }

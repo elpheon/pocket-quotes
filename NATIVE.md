@@ -1,10 +1,15 @@
-# Out of Pocket — native iOS & Android
+# Outta Pocket — native iOS & Android
 
 The web app is bundled into a Capacitor shell. Both platforms build from this
 repo; there is no remote URL involved at runtime.
 
-- Bundle ID / applicationId: `com.outtapocket.app`
-- Display name: **Out of Pocket**
+- iOS bundle ID: `com.outtapocket.app`
+- Android applicationId: `com.nathan.pocketquotes`
+
+  The two deliberately differ: the Firebase apps were registered under
+  different ids, and each platform's config file must match its own id or
+  push breaks. Do not "fix" one to match the other.
+- Display name: **Outta Pocket**
 - Capacitor 8, iOS via Swift Package Manager (no CocoaPods)
 
 ## Build cycle

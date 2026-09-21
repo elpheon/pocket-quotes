@@ -13,8 +13,12 @@ import type { CapacitorConfig } from '@capacitor/cli';
  *   npx cap open ios      # or: npx cap open android
  */
 const config: CapacitorConfig = {
+  // iOS bundle identifier. Android deliberately differs — its applicationId
+  // is com.nathan.pocketquotes (android/app/build.gradle), because the two
+  // Firebase apps were registered under different ids. This field is only
+  // read by `cap add`, so the native projects are the source of truth.
   appId: 'com.outtapocket.app',
-  appName: 'Out of Pocket',
+  appName: 'Outta Pocket',
   webDir: 'dist',
   ios: {
     contentInset: 'automatic',
