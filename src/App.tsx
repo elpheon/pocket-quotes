@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BootSplash } from "@/components/BootSplash";
 import { BottomNav } from "@/components/BottomNav";
 import { GeometricBackground } from "@/components/GeometricBackground";
 import { initializeNotifications } from "@/lib/notifications";
@@ -89,6 +90,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <BootSplash />
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>

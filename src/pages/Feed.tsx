@@ -4,7 +4,8 @@ import { isFavorite, toggleFavorite, cleanupFavorites } from '@/lib/favorites';
 import { getHideNSFW } from '@/lib/settings';
 import { QuoteCard } from '@/components/QuoteCard';
 import { StickyBannerAd, checkAndShowInterstitial, initAds } from '@/components/AdBanner';
-import { Loader2 } from 'lucide-react';
+import { signalAppReady } from '@/components/BootSplash';
+import { FuturisticLoader } from '@/components/FuturisticLoader';
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
@@ -57,6 +58,9 @@ export default function Feed() {
     async function init() {
       await refreshQuotes(true);
       setLoading(false);
+      // Lets the boot screen fade out; refreshQuotes swallows its own errors,
+      // so this fires on a failed fetch too rather than stranding the splash.
+      signalAppReady();
     }
     init();
   }, [refreshQuotes]);
@@ -140,7 +144,7 @@ export default function Feed() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <FuturisticLoader size={72} className="text-muted-foreground" />
       </div>
     );
   }

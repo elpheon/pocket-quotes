@@ -26,8 +26,12 @@ const config: CapacitorConfig = {
 
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
-      launchAutoHide: true,
+      // The web layer dismisses the splash itself (see BootSplash.tsx) so the
+      // static native image hands over to the animated loader with no white
+      // flash in between. launchShowDuration is the safety net if the web
+      // layer never boots at all.
+      launchShowDuration: 3000,
+      launchAutoHide: false,
       // Matches the app's dark --background (hsl 222 47% 11%) so the splash
       // does not flash a different colour against the app chrome.
       backgroundColor: '#0d1220',
