@@ -89,6 +89,60 @@ for both app IDs, and this resolves itself with no code change.
 `consentConfigurationProblem()` in `src/lib/admob.ts` reports the reason if you
 ever need to check it on a device.
 
+## Notifications
+
+Two separate things, often confused:
+
+- **Local** — the daily Quote of the Day reminder (`src/lib/notifications.ts`).
+  Scheduled on the device, needs no server and no Firebase. Already working.
+- **Push** — remote messages sent from outside the app (`src/lib/push.ts`).
+  Everything on the device side is wired; what remains is account setup.
+
+### Where the Firebase config lives
+
+| Platform | File | Must match |
+| --- | --- | --- |
+| iOS | `ios/App/App/GoogleService-Info.plist` | `com.outtapocket.app` |
+| Android | `android/app/google-services.json` | `com.nathan.pocketquotes` |
+
+If either stops matching its platform's identifier, push breaks — and the two
+break differently. Android fails loudly (the build stops with "No matching
+client found for package name"). iOS fails silently.
+
+### Still to do, and only Nathan can do it
+
+1. **Upload an APNs Auth Key to Firebase.** Apple Developer → Keys → create a
+   key with Apple Push Notifications enabled, download the `.p8` (it can only
+   be downloaded once), then Firebase → Project settings → Cloud Messaging →
+   iOS app → upload it with the Key ID and Team ID.
+2. **Enable the Push Notifications capability** on the App ID in the Apple
+   Developer portal, so provisioning profiles carry the entitlement.
+
+### A real difference between the platforms
+
+The Capacitor push plugin talks to **APNs directly on iOS** — it does not
+bundle the Firebase SDK. So the token the app receives is:
+
+- on **Android**, an FCM token, which the Firebase console's "send test
+  message" box accepts directly;
+- on **iOS**, an APNs token, which that box does **not** accept.
+
+So Firebase console → Android works as soon as the APNs key is uploaded, but
+Firebase console → iOS needs the Firebase iOS SDK added so it can exchange the
+APNs token for an FCM one. Without that, iOS pushes have to be sent straight to
+APNs (a small script using the `.p8`). Worth deciding which before promising
+the client console-driven sends on both platforms.
+
+### Testing
+
+The iOS Simulator is never issued a real device token, so registration can only
+be tested on a physical device. Delivery and tap handling can be tested on the
+simulator:
+
+```bash
+xcrun simctl push booted com.outtapocket.app payload.json
+```
+
 ## Still needed before submitting
 
 - **App icon** — a 1024×1024 PNG with **no alpha channel** (App Store Connect
